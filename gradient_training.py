@@ -27,13 +27,7 @@ from torchvision.io import read_image
 from torchvision.transforms import RandomCrop
 from torch import optim
 from torch import Tensor
-
-try:
-    from torch.utils.tensorboard import SummaryWriter
-    TENSORBOARD_FOUND = True
-except ImportError:
-    TENSORBOARD_FOUND = False
-
+import mlflow
 
 def random_cutouts(a: Tensor, b: Tensor, n_cutouts: int, size: int) -> typing.Tuple[Tensor, Tensor]:
     assert a.shape == b.shape
@@ -46,7 +40,6 @@ def random_cutouts(a: Tensor, b: Tensor, n_cutouts: int, size: int) -> typing.Tu
     return crops[0, ...], crops[1, ...]
 
 def training(dataset: ModelParams, opt: GradientLearningParams):
-    tb_writer = prepare_output_and_logger(dataset)
     scene = Scene(dataset, None)
     gradient_db =  GradientDb(dataset.source_path + "/gradient_db/")
     gradient_db.load()
@@ -88,42 +81,21 @@ def training(dataset: ModelParams, opt: GradientLearningParams):
                 if smoothed_loss == 0:
                     smoothed_loss = loss.item()
                 smoothed_loss = 0.4 * loss.item() + 0.6 * smoothed_loss
+                mlflow.log_metric("loss", loss.item(), epoch * len(gradient_db.entries) + sample_no)
+
                 if sample_no % 10 == 0:
                     progress_bar.set_postfix({"Loss": f"{smoothed_loss:.{4}f}", "grad abs mean": f"{target.abs().mean():.{4}f}"})
                     progress_bar.update(10)
 
+                if sample_no % 50 == 0:
+                    log_target = torch.transpose(torch.transpose(target[0:10], 1, 3), 1, 2).reshape(-1, target.shape[3], 3)
+                    log_prediction = torch.transpose(torch.transpose(prediction[0:10], 1, 3), 1, 2).reshape(-1, target.shape[3], 3)
+                    log_image = torch.cat((log_prediction, log_target), dim=1)
+                    mlflow.log_image(log_image.cpu().numpy(), f"prediction_e{epoch}_s{sample_no}.png")
+
         iter_end.record()
         if epoch == opt.n_epochs - 1:
             progress_bar.close()
-
-            # # Log and save
-            # training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
-            # if (iteration in saving_iterations):
-            #     print("\n[ITER {}] Saving Gaussians".format(iteration))
-            #     scene.save(iteration)
-
-def prepare_output_and_logger(args):    
-    if not args.model_path:
-        if os.getenv('OAR_JOB_ID'):
-            unique_str=os.getenv('OAR_JOB_ID')
-        else:
-            unique_str = str(uuid.uuid4())
-        args.model_path = os.path.join("./output/", unique_str[0:10])
-        
-    # Set up output folder
-    print("Output folder: {}".format(args.model_path))
-    os.makedirs(args.model_path, exist_ok = True)
-    with open(os.path.join(args.model_path, "cfg_args"), 'w') as cfg_log_f:
-        cfg_log_f.write(str(Namespace(**vars(args))))
-
-    # Create Tensorboard writer
-    tb_writer = None
-    if TENSORBOARD_FOUND:
-        tb_writer = SummaryWriter(args.model_path)
-    else:
-        print("Tensorboard not available: not logging progress")
-    return tb_writer
-
 
 if __name__ == "__main__":
     # Set up command line argument parser
@@ -139,7 +111,7 @@ if __name__ == "__main__":
     # Initialize system state (RNG)
     safe_state(args.quiet)
 
-    # Start GUI server, configure and run training
+    # run training
     torch.autograd.set_detect_anomaly(args.detect_anomaly)
     training(lp.extract(args), op.extract(args))
 
