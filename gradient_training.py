@@ -12,7 +12,7 @@
 import os
 import typing
 import torch
-from utils.loss_utils import l1_loss, ssim
+from utils.loss_utils import l1_loss, l2_loss, ssim
 import sys
 from scene import Scene
 from utils.general_utils import safe_state
@@ -71,25 +71,25 @@ def training(dataset: ModelParams, opt: GradientLearningParams):
             rendering.requires_grad = True
 
             Ll1 = l1_loss(rendering, gt_image)
-            loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(rendering, gt_image))
-            loss.backward()
+            rendering_loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(rendering, gt_image))
+            rendering_loss.backward()
 
-            gradient_target = rendering.grad * 1000
-            gradient_target, rendering = random_cutouts(gradient_target, rendering, 50, 128)
+            target = rendering.detach()
+            target, rendering = random_cutouts(target, rendering, 50, 128)
             optimizer.zero_grad()
-            gradient_prediction = model(rendering)
-            gradient_loss = l1_loss(gradient_target, gradient_prediction)
-            gradient_loss.backward()
+            prediction = model(rendering)
+            loss = l2_loss(target, prediction)
+            loss.backward()
             optimizer.step()
-            scheduler.step(gradient_loss)
+            scheduler.step(loss)
 
             with torch.no_grad():
                 # Progress bar
                 if smoothed_loss == 0:
-                    smoothed_loss = gradient_loss.item()
-                smoothed_loss = 0.4 * gradient_loss.item() + 0.6 * smoothed_loss
+                    smoothed_loss = loss.item()
+                smoothed_loss = 0.4 * loss.item() + 0.6 * smoothed_loss
                 if sample_no % 10 == 0:
-                    progress_bar.set_postfix({"Loss": f"{smoothed_loss:.{4}f}", "grad abs mean": f"{gradient_target.abs().mean():.{4}f}"})
+                    progress_bar.set_postfix({"Loss": f"{smoothed_loss:.{4}f}", "grad abs mean": f"{target.abs().mean():.{4}f}"})
                     progress_bar.update(10)
 
         iter_end.record()
