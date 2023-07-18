@@ -87,6 +87,13 @@ class OptimizationParams(ParamGroup):
         self.densify_grad_threshold = 0.0002
         super().__init__(parser, "Optimization Parameters")
 
+class GradientLearningParams(ParamGroup):
+    def __init__(self, parser):
+        self.lr = 0.005
+        self.lambda_dssim = 0.2
+        self.n_epochs = 10
+        super().__init__(parser, "Optimization Parameters")        
+
 def get_combined_args(parser : ArgumentParser):
     cmdlne_string = sys.argv[1:]
     cfgfile_string = "Namespace()"
