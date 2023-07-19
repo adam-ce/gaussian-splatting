@@ -28,6 +28,7 @@ from torchvision.transforms import RandomCrop
 from torch import optim
 from torch import Tensor
 import mlflow
+import mlflow.pytorch
 
 def random_cutouts(a: Tensor, b: Tensor, n_cutouts: int, size: int) -> typing.Tuple[Tensor, Tensor]:
     assert a.shape == b.shape
@@ -49,6 +50,7 @@ def training(dataset: ModelParams, opt: GradientLearningParams):
 
     train_cameras = scene.getTrainCameras().copy()
     model = make_unet(3, 3).cuda()
+    mlflow.pytorch.log_model(model, "prediction_model")
     optimizer = optim.Adam(model.parameters(), lr=opt.lr)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5)
 
@@ -71,7 +73,8 @@ def training(dataset: ModelParams, opt: GradientLearningParams):
             target, rendering = random_cutouts(target, rendering, 50, 128)
             optimizer.zero_grad()
             prediction = model(rendering)
-            loss = l2_loss(target, prediction)
+            loss = l1_loss(target, prediction)
+            loss = (1.0 - opt.lambda_dssim) * loss + opt.lambda_dssim * (1.0 - ssim(prediction, target))
             loss.backward()
             optimizer.step()
             scheduler.step(loss)
@@ -84,14 +87,14 @@ def training(dataset: ModelParams, opt: GradientLearningParams):
                 mlflow.log_metric("loss", loss.item(), epoch * len(gradient_db.entries) + sample_no)
 
                 if sample_no % 10 == 0:
-                    progress_bar.set_postfix({"Loss": f"{smoothed_loss:.{4}f}", "grad abs mean": f"{target.abs().mean():.{4}f}"})
+                    progress_bar.set_postfix({"Loss": f"{smoothed_loss:.{4}f}"})
                     progress_bar.update(10)
 
-                if sample_no % 50 == 0:
-                    log_target = torch.transpose(torch.transpose(target[0:10], 1, 3), 1, 2).reshape(-1, target.shape[3], 3)
-                    log_prediction = torch.transpose(torch.transpose(prediction[0:10], 1, 3), 1, 2).reshape(-1, target.shape[3], 3)
-                    log_image = torch.cat((log_prediction, log_target), dim=1)
-                    mlflow.log_image(log_image.cpu().numpy(), f"prediction_e{epoch}_s{sample_no}.png")
+                if sample_no % 500 == 0:
+                    log_target =     target[0:10].transpose(1, 3).transpose( 1, 2).transpose(0, 1).reshape(target.shape[3], -1, 3)
+                    log_prediction = prediction[0:10].transpose(1, 3).transpose( 1, 2).transpose(0, 1).reshape(target.shape[3], -1, 3)
+                    log_image = torch.cat((log_prediction, log_target), dim=0)
+                    mlflow.log_image(log_image.cpu().numpy(), f"prediction_e{epoch:02}_s{sample_no:05}.png")
 
         iter_end.record()
         if epoch == opt.n_epochs - 1:
