@@ -89,7 +89,7 @@ class OptimizationParams(ParamGroup):
 
 class GradientLearningParams(ParamGroup):
     def __init__(self, parser):
-        self.lr = 0.005
+        self.lr = 0.01
         self.lambda_dssim = 0.2
         self.n_epochs = 10
         super().__init__(parser, "Optimization Parameters")        
