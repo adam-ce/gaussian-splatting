@@ -20,6 +20,8 @@ import json
 from tqdm import tqdm
 from utils.image_utils import psnr
 from argparse import ArgumentParser
+import csv
+
 
 def readImages(renders_dir, gt_dir):
     renders = []
@@ -33,21 +35,40 @@ def readImages(renders_dir, gt_dir):
         image_names.append(fname)
     return renders, gts, image_names
 
-def evaluate(model_paths):
+def write_csv(data, filename):
+    methods = next(iter(data.values())).keys()
+    fieldnames = ["scene", *(list(methods))]
 
+    with open(filename, 'w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        
+        # Write the CSV header
+        writer.writeheader()
+        
+        # Iterate over the dictionary of dicts and write each record to the CSV file
+        for key, d in data.items():
+            # Flatten the nested dictionary
+            row = {'scene': key, **d}
+            writer.writerow(row)
+
+def evaluate(model_paths):
+    ssim_dict = {}
+    psnr_dict = {}
+    lpips_dict = {}
+    
     full_dict = {}
     per_view_dict = {}
-    full_dict_polytopeonly = {}
-    per_view_dict_polytopeonly = {}
     print("")
 
     for scene_dir in model_paths:
         try:
             print("Scene:", scene_dir)
+            ssim_dict[scene_dir] = {}
+            psnr_dict[scene_dir] = {}
+            lpips_dict[scene_dir] = {}
+            
             full_dict[scene_dir] = {}
             per_view_dict[scene_dir] = {}
-            full_dict_polytopeonly[scene_dir] = {}
-            per_view_dict_polytopeonly[scene_dir] = {}
 
             test_dir = Path(scene_dir) / "test"
 
@@ -56,8 +77,6 @@ def evaluate(model_paths):
 
                 full_dict[scene_dir][method] = {}
                 per_view_dict[scene_dir][method] = {}
-                full_dict_polytopeonly[scene_dir][method] = {}
-                per_view_dict_polytopeonly[scene_dir][method] = {}
 
                 method_dir = test_dir / method
                 gt_dir = method_dir/ "gt"
@@ -77,6 +96,10 @@ def evaluate(model_paths):
                 print("  PSNR : {:>12.7f}".format(torch.tensor(psnrs).mean(), ".5"))
                 print("  LPIPS: {:>12.7f}".format(torch.tensor(lpipss).mean(), ".5"))
                 print("")
+                
+                ssim_dict[scene_dir][method] = torch.tensor(ssims).mean().item()
+                psnr_dict[scene_dir][method] = torch.tensor(psnrs).mean().item()
+                lpips_dict[scene_dir][method] = torch.tensor(lpipss).mean().item()
 
                 full_dict[scene_dir][method].update({"SSIM": torch.tensor(ssims).mean().item(),
                                                         "PSNR": torch.tensor(psnrs).mean().item(),
@@ -91,6 +114,10 @@ def evaluate(model_paths):
                 json.dump(per_view_dict[scene_dir], fp, indent=True)
         except:
             print("Unable to compute metrics for model", scene_dir)
+    
+    write_csv(ssim_dict, "./eval_ssim.csv")
+    write_csv(psnr_dict, "./eval_psnr.csv")
+    write_csv(lpips_dict, "./eval_lpips.csv")
 
 if __name__ == "__main__":
     device = torch.device("cuda:0")

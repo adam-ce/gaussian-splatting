@@ -40,16 +40,16 @@ if not args.skip_training:
     common_args = " --quiet --eval --test_iterations -1 "
     for scene in mipnerf360_outdoor_scenes:
         source = args.mipnerf360 + "/" + scene
-        os.system("python train.py -s " + source + " -i images_4 -m " + args.output_path + "/" + scene + common_args)
+        os.system("python3 train.py -s " + source + " -i images_4 -m " + args.output_path + "/" + scene + common_args)
     for scene in mipnerf360_indoor_scenes:
         source = args.mipnerf360 + "/" + scene
-        os.system("python train.py -s " + source + " -i images_2 -m " + args.output_path + "/" + scene + common_args)
+        os.system("python3 train.py -s " + source + " -i images_2 -m " + args.output_path + "/" + scene + common_args)
     for scene in tanks_and_temples_scenes:
         source = args.tanksandtemples + "/" + scene
-        os.system("python train.py -s " + source + " -m " + args.output_path + "/" + scene + common_args)
+        os.system("python3 train.py -s " + source + " -m " + args.output_path + "/" + scene + common_args)
     for scene in deep_blending_scenes:
         source = args.deepblending + "/" + scene
-        os.system("python train.py -s " + source + " -m " + args.output_path + "/" + scene + common_args)
+        os.system("python3 train.py -s " + source + " -m " + args.output_path + "/" + scene + common_args)
 
 if not args.skip_rendering:
     all_sources = []
@@ -64,12 +64,12 @@ if not args.skip_rendering:
 
     common_args = " --quiet --eval --skip_train"
     for scene, source in zip(all_scenes, all_sources):
-        os.system("python render.py --iteration 7000 -s " + source + " -m " + args.output_path + "/" + scene + common_args)
-        os.system("python render.py --iteration 30000 -s " + source + " -m " + args.output_path + "/" + scene + common_args)
+        os.system("python3 render.py --iteration 7000 -s " + source + " -m " + args.output_path + "/" + scene + common_args)
+        os.system("python3 render.py --iteration 30000 -s " + source + " -m " + args.output_path + "/" + scene + common_args)
 
 if not args.skip_metrics:
     scenes_string = ""
     for scene in all_scenes:
         scenes_string += "\"" + args.output_path + "/" + scene + "\" "
 
-    os.system("python metrics.py -m " + scenes_string)
+    os.system("python3 metrics.py -m " + scenes_string)
