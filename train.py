@@ -1,3 +1,4 @@
+#!/bin/python3
 #
 # Copyright (C) 2023, Inria
 # GRAPHDECO research group, https://team.inria.fr/graphdeco

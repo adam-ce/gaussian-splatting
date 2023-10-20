@@ -22,6 +22,7 @@ from pathlib import Path
 from plyfile import PlyData, PlyElement
 from utils.sh_utils import SH2RGB
 from scene.gaussian_model import BasicPointCloud
+import csv
 
 class CameraInfo(NamedTuple):
     uid: int
@@ -146,8 +147,20 @@ def readColmapSceneInfo(path, images, eval, llffhold=8):
     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
 
     if eval:
-        train_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold != 0]
-        test_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold == 0]
+        try:
+            test_cameras = set()
+            test_camera_file_path = os.path.join(path, "test_cameras.csv")
+            with open(test_camera_file_path, mode='r', newline='') as test_camera_file:
+                reader = csv.reader(test_camera_file)
+                for row in reader:
+                    for string in row:
+                        test_cameras.add(string)
+            train_cam_infos = [c for c in cam_infos if c.image_name not in test_cameras]
+            test_cam_infos = [c for c in cam_infos if c.image_name in test_cameras]
+        except FileNotFoundError:
+            print(f"The '{test_camera_file_path}' file does not exist. Using every {llffhold}th camera position for testing.")
+            train_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold != 0]
+            test_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold == 0]
     else:
         train_cam_infos = cam_infos
         test_cam_infos = []
