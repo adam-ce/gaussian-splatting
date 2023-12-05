@@ -409,7 +409,11 @@ class GaussianModel:
         self.densify_and_clone(grads, max_grad, extent)
         self.densify_and_split(grads, max_grad, extent)
 
-        prune_mask = (self.get_opacity < min_opacity).squeeze()
+        if self.use_orientation_independent_density:
+            dets_covs = torch.prod(self.get_scaling, -1, keepdim=True)
+            prune_mask = ((self.get_opacity * (torch.sqrt(dets_covs) * (2 * math.pi) ** 3/2)) < min_opacity).squeeze()
+        else:
+            prune_mask = (self.get_opacity < min_opacity).squeeze()
         if max_screen_size:
             big_points_vs = self.max_radii2D > max_screen_size
             big_points_ws = self.get_scaling.max(dim=1).values > 0.1 * extent
