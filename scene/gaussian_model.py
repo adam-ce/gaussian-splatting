@@ -31,12 +31,16 @@ class GaussianModel:
             symm = strip_symmetric(actual_covariance)
             return symm
         
+        self.use_orientation_independent_density = True
         self.scaling_activation = torch.exp
         self.scaling_inverse_activation = torch.log
 
         self.covariance_activation = build_covariance_from_scaling_rotation
 
-        self.opacity_activation = torch.relu
+        if self.use_orientation_independent_density:
+            self.opacity_activation = torch.exp
+        else:
+            self.opacity_activation = torch.sigmoid
 
         self.rotation_activation = torch.nn.functional.normalize
 
@@ -136,10 +140,13 @@ class GaussianModel:
         rots = torch.zeros((fused_point_cloud.shape[0], 4), device="cuda")
         rots[:, 0] = 1
 
-        opacities = (0.1 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
-        dets_covs = torch.prod(scales, -1, keepdim=True)
-        opacities = opacities * torch.sqrt(dets_covs) * (2 * math.pi) ** 3/2
-        opacities = torch.log(opacities)
+        if self.use_orientation_independent_density:
+            opacities = (0.005 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
+            dets_covs = torch.prod(torch.exp(scales), -1, keepdim=True)
+            opacities = opacities * (torch.sqrt(dets_covs) * (2 * math.pi) ** 3/2)
+            opacities = torch.log(opacities)
+        else:
+            opacities = inverse_sigmoid(0.1 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
 
         self._xyz = nn.Parameter(fused_point_cloud.requires_grad_(True))
         self._features_dc = nn.Parameter(features[:,:,0:1].transpose(1, 2).contiguous().requires_grad_(True))
@@ -211,7 +218,13 @@ class GaussianModel:
         PlyData([el]).write(path)
 
     def reset_opacity(self):
-        opacities_new = inverse_sigmoid(torch.min(self.get_opacity, torch.ones_like(self.get_opacity)*0.01))
+        if self.use_orientation_independent_density:
+            opacities_min = (0.005 * torch.ones_like(self.get_opacity))
+            dets_covs = torch.prod(self.get_scaling, -1, keepdim=True)
+            opacities_min = opacities_min * (torch.sqrt(dets_covs) * (2 * math.pi) ** 3/2)
+            opacities_new = torch.log(torch.min(self.get_opacity, opacities_min))
+        else:
+            opacities_new = inverse_sigmoid(torch.min(self.get_opacity, torch.ones_like(self.get_opacity)*0.01))
         optimizable_tensors = self.replace_tensor_to_optimizer(opacities_new, "opacity")
         self._opacity = optimizable_tensors["opacity"]
 
