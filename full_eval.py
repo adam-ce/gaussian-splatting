@@ -20,13 +20,13 @@ deep_blending_scenes = []
 vienna_scenes = []
 nerf_synthetic_scenes = []
 
-# mipnerf360_outdoor_scenes = ["bicycle", "flowers", "garden", "stump", "treehill"]
-# mipnerf360_indoor_scenes = ["room", "counter", "kitchen", "bonsai"]
-# tanks_and_temples_scenes = ["truck", "train"]
-# deep_blending_scenes = ["drjohnson", "playroom"]
-# vienna_scenes = ["colourlab3", "hohe_veitsch"]
-# vienna_scenes = ["insti_roof22"]
-nerf_synthetic_scenes = ["mic", "ship"]
+mipnerf360_outdoor_scenes = ["bicycle", "flowers", "garden", "stump", "treehill"]
+mipnerf360_indoor_scenes = ["room", "counter", "kitchen", "bonsai"]
+tanks_and_temples_scenes = ["truck", "train"]
+deep_blending_scenes = ["drjohnson", "playroom"]
+vienna_scenes = ["colourlab3", "hohe_veitsch"]
+#vienna_scenes = ["insti_roof22"]
+#nerf_synthetic_scenes = ["mic", "ship"]
 
 parser = ArgumentParser(description="Full evaluation script parameters")
 parser.add_argument("--skip_training", action="store_true")
@@ -48,15 +48,15 @@ white_bg_scenes.extend(nerf_synthetic_scenes)
 
 if not args.skip_training or not args.skip_rendering:
     if (len(mipnerf360_outdoor_scenes) + len(mipnerf360_indoor_scenes) > 0):
-        parser.add_argument('--mipnerf360', "-m360", required=True, type=str)
+        parser.add_argument('--mipnerf360', "-m360", required=False, type=str, default="../360_v2")
     if (len(tanks_and_temples_scenes) > 0):
-        parser.add_argument("--tanksandtemples", "-tat", required=True, type=str)
+        parser.add_argument("--tanksandtemples", "-tat", required=False, type=str, default="../tandt_db/tandt")
     if (len(deep_blending_scenes) > 0):
-        parser.add_argument("--deepblending", "-db", required=True, type=str)
+        parser.add_argument("--deepblending", "-db", required=False, type=str, default="../tandt_db/db")
     if (len(vienna_scenes) > 0):
-        parser.add_argument("--tuwien", "-tuw", required=True, type=str)
+        parser.add_argument("--tuwien", "-tuw", required=False, type=str, default="../")
     if (len(nerf_synthetic_scenes) > 0):
-        parser.add_argument("--nerfsynth", "-ns", required=True, type=str)
+        parser.add_argument("--nerfsynth", "-ns", required=False, type=str, default="../nerf_synthetic")
     args = parser.parse_args()
 
 if not args.skip_training:
