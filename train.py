@@ -82,7 +82,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         if (iteration - 1) == debug_from:
             pipe.debug = True
         render_pkg = render(viewpoint_cam, gaussians, pipe, background)
-        image, viewspace_point_tensor, visibility_filter, radii = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
+        image, screenspace_point_tensor, visibility_filter, radii = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
 
         # Loss
         gt_image = viewpoint_cam.original_image.cuda()
@@ -111,7 +111,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             if iteration < opt.densify_until_iter:
                 # Keep track of max radii in image-space for pruning
                 gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
-                gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
+                viewspace_point_tensor_grad = screenspace_point_tensor.grad * torch.tensor((image.shape[2]/2, image.shape[1]/2, 1)).view(1, -1).to(screenspace_point_tensor.device)
+                gaussians.add_densification_stats(viewspace_point_tensor_grad, visibility_filter)
 
                 if iteration > opt.densify_from_iter and iteration % opt.densification_interval == 0:
                     size_threshold = 20 if iteration > opt.opacity_reset_interval else None
@@ -160,7 +161,7 @@ def training_report(tb_writer, iteration, Ll1, loss, l1_loss, elapsed, testing_i
             tb_writer.add_histogram("scene/opacity_histogram", scene.gaussians.get_opacity, iteration)
             tb_writer.add_scalar('total_points', scene.gaussians.get_xyz.shape[0], iteration)
             tb_writer.add_histogram('gaussians.xyz_gradient_accum',
-                                    (scene.gaussians.xyz_gradient_accum).view(-1), iteration)
+                                    torch.minimum((scene.gaussians.xyz_gradient_accum).view(-1), torch.tensor(0.1).to(scene.gaussians.xyz_gradient_accum.device)), iteration)
             tb_writer.add_scalar(f"gaussians.xyz_gradient_accum.max", (scene.gaussians.xyz_gradient_accum).view(-1).max(), iteration)
             tb_writer.add_scalar(f"gaussians.xyz_gradient_accum.mean", (scene.gaussians.xyz_gradient_accum).view(-1).mean(), iteration)
 
