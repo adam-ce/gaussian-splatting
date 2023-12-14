@@ -31,13 +31,13 @@ class GaussianModel:
             symm = strip_symmetric(actual_covariance)
             return symm
         
-        self.use_orientation_independent_density = True
+        self.use_physical_density = False
         self.scaling_activation = torch.exp
         self.scaling_inverse_activation = torch.log
 
         self.covariance_activation = build_covariance_from_scaling_rotation
 
-        if self.use_orientation_independent_density:
+        if self.use_physical_density:
             self.opacity_activation = torch.exp
         else:
             self.opacity_activation = torch.sigmoid
@@ -140,7 +140,7 @@ class GaussianModel:
         rots = torch.zeros((fused_point_cloud.shape[0], 4), device="cuda")
         rots[:, 0] = 1
 
-        if self.use_orientation_independent_density:
+        if self.use_physical_density:
             opacities = (0.005 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
             dets_covs = torch.prod(torch.exp(scales), -1, keepdim=True)
             opacities = opacities * (torch.sqrt(dets_covs) * (2 * math.pi) ** 3/2)
@@ -218,7 +218,7 @@ class GaussianModel:
         PlyData([el]).write(path)
 
     def reset_opacity(self):
-        if self.use_orientation_independent_density:
+        if self.use_physical_density:
             opacities_min = (0.005 * torch.ones_like(self.get_opacity))
             dets_covs = torch.prod(self.get_scaling, -1, keepdim=True)
             opacities_min = opacities_min * (torch.sqrt(dets_covs) * (2 * math.pi) ** 3/2)
