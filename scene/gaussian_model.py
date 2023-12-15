@@ -12,7 +12,7 @@
 import math
 import torch
 import numpy as np
-from utils.general_utils import inverse_sigmoid, get_expon_lr_func, build_rotation
+from utils.general_utils import inverse_sigmoid, inverse_softplus, get_expon_lr_func, build_rotation
 from torch import nn
 import os
 from utils.system_utils import mkdir_p
@@ -38,9 +38,13 @@ class GaussianModel:
         self.covariance_activation = build_covariance_from_scaling_rotation
 
         if self.use_physical_density:
-            self.opacity_activation = torch.exp
+            # self.opacity_activation = torch.exp
+            # self.opacity_inverse_activation = torch.log
+            self.opacity_activation = nn.functional.softplus
+            self.opacity_inverse_activation = inverse_softplus
         else:
             self.opacity_activation = torch.sigmoid
+            self.opacity_inverse_activation = inverse_sigmoid
 
         self.rotation_activation = torch.nn.functional.normalize
 
@@ -141,12 +145,13 @@ class GaussianModel:
         rots[:, 0] = 1
 
         if self.use_physical_density:
-            opacities = (0.005 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
-            dets_covs = torch.prod(torch.exp(scales), -1, keepdim=True)
-            opacities = opacities * (torch.sqrt(dets_covs) * (2 * math.pi) ** 3/2)
-            opacities = torch.log(opacities)
+            opacities = (0.03 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
+            sqrt_dets_covs3d = torch.abs(torch.prod(torch.exp(scales), -1, keepdim=True)) # scales are SDs in eigen vector directions
+            sqrt_dets_covs2d = torch.abs(torch.prod(torch.exp(scales[:, :2]), -1, keepdim=True))
+            opacities = opacities * sqrt_dets_covs2d / sqrt_dets_covs3d
         else:
-            opacities = inverse_sigmoid(0.1 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
+            opacities = 0.1 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda")
+        opacities = self.opacity_inverse_activation(opacities)
 
         self._xyz = nn.Parameter(fused_point_cloud.requires_grad_(True))
         self._features_dc = nn.Parameter(features[:,:,0:1].transpose(1, 2).contiguous().requires_grad_(True))
@@ -219,12 +224,14 @@ class GaussianModel:
 
     def reset_opacity(self):
         if self.use_physical_density:
-            opacities_min = (0.005 * torch.ones_like(self.get_opacity))
-            dets_covs = torch.prod(self.get_scaling, -1, keepdim=True)
-            opacities_min = opacities_min * (torch.sqrt(dets_covs) * (2 * math.pi) ** 3/2)
-            opacities_new = torch.log(torch.min(self.get_opacity, opacities_min))
+            opacities_min = (0.03 * torch.ones_like(self.get_opacity))
+            sqrt_dets_covs3d = torch.abs(torch.prod(self.get_scaling, -1, keepdim=True)) # scales are SDs in eigen vector directions
+            sqrt_dets_covs2d = torch.abs(torch.prod(self.get_scaling[:, :2], -1, keepdim=True))
+            opacities_min = opacities_min * sqrt_dets_covs2d / sqrt_dets_covs3d
+            opacities_new = torch.min(self.get_opacity, opacities_min)
         else:
-            opacities_new = inverse_sigmoid(torch.min(self.get_opacity, torch.ones_like(self.get_opacity)*0.01))
+            opacities_new = torch.min(self.get_opacity, torch.ones_like(self.get_opacity)*0.01)
+        opacities_new = self.opacity_inverse_activation(opacities_new)
         optimizable_tensors = self.replace_tensor_to_optimizer(opacities_new, "opacity")
         self._opacity = optimizable_tensors["opacity"]
 
