@@ -144,13 +144,11 @@ class GaussianModel:
         rots = torch.zeros((fused_point_cloud.shape[0], 4), device="cuda")
         rots[:, 0] = 1
 
+        opacities = (0.1 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
         if self.use_physical_density:
-            opacities = (0.03 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
-            sqrt_dets_covs3d = torch.abs(torch.prod(torch.exp(scales), -1, keepdim=True)) # scales are SDs in eigen vector directions
-            sqrt_dets_covs2d = torch.abs(torch.prod(torch.exp(scales[:, :2]), -1, keepdim=True))
-            opacities = opacities * sqrt_dets_covs2d / sqrt_dets_covs3d
-        else:
-            opacities = 0.1 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda")
+            exp3d_integral = ((2 * math.pi)**(3/2)) * torch.abs(torch.prod(torch.exp(scales), -1, keepdim=True)) # scales are SDs in eigen vector directions
+            exp2d_integral = 2 * math.pi * torch.abs(torch.prod(torch.exp(scales[:, :2]), -1, keepdim=True))
+            opacities = opacities * exp2d_integral / exp3d_integral
         opacities = self.opacity_inverse_activation(opacities)
 
         self._xyz = nn.Parameter(fused_point_cloud.requires_grad_(True))
@@ -223,14 +221,12 @@ class GaussianModel:
         PlyData([el]).write(path)
 
     def reset_opacity(self):
+        opacities_max = torch.ones_like(self.get_opacity)*0.01
         if self.use_physical_density:
-            opacities_min = (0.03 * torch.ones_like(self.get_opacity))
-            sqrt_dets_covs3d = torch.abs(torch.prod(self.get_scaling, -1, keepdim=True)) # scales are SDs in eigen vector directions
-            sqrt_dets_covs2d = torch.abs(torch.prod(self.get_scaling[:, :2], -1, keepdim=True))
-            opacities_min = opacities_min * sqrt_dets_covs2d / sqrt_dets_covs3d
-            opacities_new = torch.min(self.get_opacity, opacities_min)
-        else:
-            opacities_new = torch.min(self.get_opacity, torch.ones_like(self.get_opacity)*0.01)
+            exp3d_integral = ((2 * math.pi)**(3/2)) * torch.abs(torch.prod(self.get_scaling, -1, keepdim=True)) # scales are SDs in eigen vector directions
+            exp2d_integral = 2 * math.pi * torch.abs(torch.prod(self.get_scaling[:, :2], -1, keepdim=True))
+            opacities_max = opacities_max * exp2d_integral / exp3d_integral
+        opacities_new = torch.min(self.get_opacity, opacities_max)
         opacities_new = self.opacity_inverse_activation(opacities_new)
         optimizable_tensors = self.replace_tensor_to_optimizer(opacities_new, "opacity")
         self._opacity = optimizable_tensors["opacity"]
