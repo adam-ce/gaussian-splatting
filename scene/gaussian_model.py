@@ -21,6 +21,7 @@ from utils.sh_utils import RGB2SH
 from simple_knn._C import distCUDA2
 from utils.graphics_utils import BasicPointCloud
 from utils.general_utils import strip_symmetric, build_scaling_rotation
+from arguments import ModelParams
 
 class GaussianModel:
 
@@ -31,27 +32,30 @@ class GaussianModel:
             symm = strip_symmetric(actual_covariance)
             return symm
         
-        self.use_physical_density = False
         self.scaling_activation = torch.exp
         self.scaling_inverse_activation = torch.log
 
         self.covariance_activation = build_covariance_from_scaling_rotation
 
-        if self.use_physical_density:
-            # self.opacity_activation = torch.exp
-            # self.opacity_inverse_activation = torch.log
+        if self.formulation == 0:  # 0=original/opacity; 1=mass; 2=density; 3=ots
+            self.opacity_activation = torch.sigmoid
+            self.opacity_inverse_activation = inverse_sigmoid
+        elif self.formulation == 1:
+            self.opacity_activation = torch.exp
+            self.opacity_inverse_activation = torch.log
+        elif self.formulation == 2:
             self.opacity_activation = nn.functional.softplus
             self.opacity_inverse_activation = inverse_softplus
-        else:
+        elif self.formulation == 3:
             self.opacity_activation = torch.sigmoid
             self.opacity_inverse_activation = inverse_sigmoid
 
         self.rotation_activation = torch.nn.functional.normalize
 
 
-    def __init__(self, sh_degree : int):
+    def __init__(self, model_params: ModelParams):
         self.active_sh_degree = 0
-        self.max_sh_degree = sh_degree  
+        self.max_sh_degree = model_params.sh_degree  
         self._xyz = torch.empty(0)
         self._features_dc = torch.empty(0)
         self._features_rest = torch.empty(0)
@@ -64,6 +68,7 @@ class GaussianModel:
         self.optimizer = None
         self.percent_dense = 0
         self.spatial_lr_scale = 0
+        self.formulation = model_params.formulation
         self.setup_functions()
 
     def capture(self):
@@ -144,11 +149,21 @@ class GaussianModel:
         rots = torch.zeros((fused_point_cloud.shape[0], 4), device="cuda")
         rots[:, 0] = 1
 
-        opacities = (0.1 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
-        if self.use_physical_density:
+
+        if self.formulation == 0:  # 0=original/opacity; 1=mass; 2=density; 3=ots
+            opacities = (0.1 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
+        elif self.formulation == 1:
+            opacities = (0.005 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
+            dets_covs = torch.prod(torch.exp(scales), -1, keepdim=True)
+            opacities = opacities * (torch.sqrt(dets_covs) * (2 * math.pi) ** 3/2)
+            raise NotImplementedError("Please test this one again. before iteration 0, the rendering should look approx the same as original.")
+        elif self.formulation == 2:
             exp3d_integral = ((2 * math.pi)**(3/2)) * torch.abs(torch.prod(torch.exp(scales), -1, keepdim=True)) # scales are SDs in eigen vector directions
             exp2d_integral = 2 * math.pi * torch.abs(torch.prod(torch.exp(scales[:, :2]), -1, keepdim=True))
             opacities = opacities * exp2d_integral / exp3d_integral
+        elif self.formulation == 3:
+            opacities = (0.1 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
+        
         opacities = self.opacity_inverse_activation(opacities)
 
         self._xyz = nn.Parameter(fused_point_cloud.requires_grad_(True))
@@ -168,8 +183,8 @@ class GaussianModel:
             {'params': [self._xyz], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "xyz"},
             {'params': [self._features_dc], 'lr': training_args.feature_lr, "name": "f_dc"},
             {'params': [self._features_rest], 'lr': training_args.feature_lr / 20.0, "name": "f_rest"},
-            {'params': [self._opacity], 'lr': training_args.opacity_lr, "name": "opacity"},
             {'params': [self._scaling], 'lr': training_args.scaling_lr, "name": "scaling"},
+            {'params': [self._opacity], 'lr': training_args.opacity_lr, "name": "opacity"},
             {'params': [self._rotation], 'lr': training_args.rotation_lr, "name": "rotation"}
         ]
 
@@ -221,11 +236,20 @@ class GaussianModel:
         PlyData([el]).write(path)
 
     def reset_opacity(self):
-        opacities_max = torch.ones_like(self.get_opacity)*0.01
-        if self.use_physical_density:
+        if self.formulation == 0:  # 0=original/opacity; 1=mass; 2=density; 3=ots
+            opacities_max = torch.ones_like(self.get_opacity)*0.01
+        elif self.formulation == 1:
+            opacities_max = (0.005 * torch.ones_like(self.get_opacity))
+            dets_covs = torch.prod(self.get_scaling, -1, keepdim=True)
+            opacities_max = opacities_max * (torch.sqrt(dets_covs) * (2 * math.pi) ** 3/2)
+            raise NotImplementedError("Please test this one again. before iteration 0, the rendering should look approx the same as original.")
+        elif self.formulation == 2:
             exp3d_integral = ((2 * math.pi)**(3/2)) * torch.abs(torch.prod(self.get_scaling, -1, keepdim=True)) # scales are SDs in eigen vector directions
             exp2d_integral = 2 * math.pi * torch.abs(torch.prod(self.get_scaling[:, :2], -1, keepdim=True))
             opacities_max = opacities_max * exp2d_integral / exp3d_integral
+        elif self.formulation == 3:
+            opacities_max = torch.ones_like(self.get_opacity)*0.01
+
         opacities_new = torch.min(self.get_opacity, opacities_max)
         opacities_new = self.opacity_inverse_activation(opacities_new)
         optimizable_tensors = self.replace_tensor_to_optimizer(opacities_new, "opacity")
@@ -383,7 +407,7 @@ class GaussianModel:
         new_rotation = self._rotation[selected_pts_mask].repeat(N,1)
         new_features_dc = self._features_dc[selected_pts_mask].repeat(N,1,1)
         new_features_rest = self._features_rest[selected_pts_mask].repeat(N,1,1)
-        new_opacity = self._opacity[selected_pts_mask].repeat(N,1)
+        new_opacity = self.opacity_inverse_activation(self.get_opacity[selected_pts_mask].repeat(N,1) * (0.8 / N))
 
         self.densification_postfix(new_xyz, new_features_dc, new_features_rest, new_opacity, new_scaling, new_rotation)
 
@@ -399,6 +423,7 @@ class GaussianModel:
         new_xyz = self._xyz[selected_pts_mask]
         new_features_dc = self._features_dc[selected_pts_mask]
         new_features_rest = self._features_rest[selected_pts_mask]
+        self._opacity[selected_pts_mask] *= 0.4
         new_opacities = self._opacity[selected_pts_mask]
         new_scaling = self._scaling[selected_pts_mask]
         new_rotation = self._rotation[selected_pts_mask]
@@ -413,9 +438,9 @@ class GaussianModel:
         self.densify_and_clone(grads, max_grad, extent)
         self.densify_and_split(grads, max_grad, extent)
 
-        # if self.use_orientation_independent_density:
+        # if self.use_physical_density:
         #     dets_covs = torch.prod(self.get_scaling, -1, keepdim=True)
-        #     prune_mask = ((self.get_opacity / (torch.sqrt(dets_covs) * (2 * math.pi) ** 3/2)) < min_opacity).squeeze()
+        #     prune_mask = ((self.get_opacity * (torch.sqrt(dets_covs) * (2 * math.pi) ** 3/2)) < min_opacity).squeeze()
         # else:
         #     prune_mask = (self.get_opacity < min_opacity).squeeze()
         # if max_screen_size:

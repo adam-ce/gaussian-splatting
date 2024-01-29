@@ -47,6 +47,7 @@ class ParamGroup:
 class ModelParams(ParamGroup): 
     def __init__(self, parser, sentinel=False):
         self.sh_degree = 3
+        self.formulation = 0 # 0=original/opacity; 1=mass; 2=density; 3=ots
         self._source_path = ""
         self._model_path = ""
         self._images = "images"
@@ -60,6 +61,19 @@ class ModelParams(ParamGroup):
         g = super().extract(args)
         g.source_path = os.path.abspath(g.source_path)
         return g
+    
+    def default_opacity_lr(self):
+        if self.formulation == 1:
+            return 0.005
+        if self.formulation == 2:
+            return 0.013
+        return 0.05
+    
+    def default_densify_grad_threshold(self):
+        if self.formulation == 2:
+            return 0.00015
+        return 0.0002
+        
 
 class PipelineParams(ParamGroup):
     def __init__(self, parser):
@@ -69,14 +83,15 @@ class PipelineParams(ParamGroup):
         super().__init__(parser, "Pipeline Parameters")
 
 class OptimizationParams(ParamGroup):
-    def __init__(self, parser):
+    def __init__(self, parser, model_params: ModelParams):
         self.iterations = 30_000
         self.position_lr_init = 0.00016
         self.position_lr_final = 0.0000016
         self.position_lr_delay_mult = 0.01
         self.position_lr_max_steps = 30_000
         self.feature_lr = 0.0025
-        self.opacity_lr = 0.05
+        self.opacity_lr = model_params.default_opacity_lr()
+        self.opacity_weight_decay = 0
         self.scaling_lr = 0.005
         self.rotation_lr = 0.001
         self.percent_dense = 0.01
@@ -85,7 +100,7 @@ class OptimizationParams(ParamGroup):
         self.opacity_reset_interval = 3000
         self.densify_from_iter = 500
         self.densify_until_iter = 15_000
-        self.densify_grad_threshold = 0.0002
+        self.densify_grad_threshold = model_params.default_densify_grad_threshold()
         super().__init__(parser, "Optimization Parameters")
 
 def get_combined_args(parser : ArgumentParser):

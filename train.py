@@ -29,17 +29,17 @@ try:
 except ImportError:
     TENSORBOARD_FOUND = False
 
-def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
+def training(model_params, opt, pipe, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
     first_iter = 0
-    tb_writer = prepare_output_and_logger(dataset)
-    gaussians = GaussianModel(dataset.sh_degree)
-    scene = Scene(dataset, gaussians)
+    tb_writer = prepare_output_and_logger(model_params)
+    gaussians = GaussianModel(model_params)
+    scene = Scene(model_params, gaussians)
     gaussians.training_setup(opt)
     if checkpoint:
         (model_params, first_iter) = torch.load(checkpoint)
         gaussians.restore(model_params, opt)
 
-    bg_color = [1, 1, 1] if dataset.white_background else [0, 0, 0]
+    bg_color = [1, 1, 1] if model_params.white_background else [0, 0, 0]
     background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
 
     iter_start = torch.cuda.Event(enable_timing = True)
@@ -59,7 +59,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 if custom_cam != None:
                     net_image = render(custom_cam, gaussians, pipe, background, scaling_modifer)["render"]
                     net_image_bytes = memoryview((torch.clamp(net_image, min=0, max=1.0) * 255).byte().permute(1, 2, 0).contiguous().cpu().numpy())
-                network_gui.send(net_image_bytes, dataset.source_path)
+                network_gui.send(net_image_bytes, model_params.source_path)
                 if do_training and ((iteration < int(opt.iterations)) or not keep_alive):
                     break
             except Exception as e:
@@ -87,7 +87,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         # Loss
         gt_image = viewpoint_cam.original_image.cuda()
         Ll1 = l1_loss(image, gt_image)
-        loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
+        loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image)) + gaussians.get_opacity.mean() * opt.opacity_weight_decay
         loss.backward()
 
         iter_end.record()
@@ -118,7 +118,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                     size_threshold = 20 if iteration > opt.opacity_reset_interval else None
                     gaussians.densify_and_prune(opt.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold) # prune based on density in the centre
                 
-                if iteration % opt.opacity_reset_interval == 0 or (dataset.white_background and iteration == opt.densify_from_iter):
+                if iteration % opt.opacity_reset_interval == 0 or (model_params.white_background and iteration == opt.densify_from_iter):
                     gaussians.reset_opacity()
 
             # Optimizer step
@@ -160,10 +160,11 @@ def training_report(tb_writer, iteration, Ll1, loss, l1_loss, elapsed, testing_i
         if iteration % 500 == 0:
             tb_writer.add_histogram("scene/opacity_histogram", scene.gaussians.get_opacity, iteration)
             tb_writer.add_scalar('total_points', scene.gaussians.get_xyz.shape[0], iteration)
-            tb_writer.add_histogram('gaussians.xyz_gradient_accum',
-                                    torch.minimum((scene.gaussians.xyz_gradient_accum).view(-1), torch.tensor(0.1).to(scene.gaussians.xyz_gradient_accum.device)), iteration)
-            tb_writer.add_scalar(f"gaussians.xyz_gradient_accum.max", (scene.gaussians.xyz_gradient_accum).view(-1).max(), iteration)
-            tb_writer.add_scalar(f"gaussians.xyz_gradient_accum.mean", (scene.gaussians.xyz_gradient_accum).view(-1).mean(), iteration)
+            tb_writer.add_scalar('opacity.mean', scene.gaussians.get_opacity.mean(), iteration)
+            # tb_writer.add_histogram('gaussians.xyz_gradient_accum',
+                                    # torch.minimum((scene.gaussians.xyz_gradient_accum).view(-1), torch.tensor(0.1).to(scene.gaussians.xyz_gradient_accum.device)), iteration)
+            # tb_writer.add_scalar(f"gaussians.xyz_gradient_accum.max", (scene.gaussians.xyz_gradient_accum).view(-1).max(), iteration)
+            # tb_writer.add_scalar(f"gaussians.xyz_gradient_accum.mean", (scene.gaussians.xyz_gradient_accum).view(-1).mean(), iteration)
 
     # Report test and samples of training set
     if iteration in testing_iterations:
@@ -200,14 +201,14 @@ if __name__ == "__main__":
     # Set up command line argument parser
     parser = ArgumentParser(description="Training script parameters")
     lp = ModelParams(parser)
-    op = OptimizationParams(parser)
+    op = OptimizationParams(parser, lp)
     pp = PipelineParams(parser)
     parser.add_argument('--ip', type=str, default="127.0.0.1")
     parser.add_argument('--port', type=int, default=6009)
     parser.add_argument('--debug_from', type=int, default=-1)
     parser.add_argument('--detect_anomaly', action='store_true', default=False)
-    parser.add_argument("--test_iterations", nargs="+", type=int, default=[7_000, 30_000])
-    parser.add_argument("--save_iterations", nargs="+", type=int, default=[7_000, 30_000])
+    parser.add_argument("--test_iterations", nargs="+", type=int, default=[3_000, 7_000, 10_000, 15_000, 30_000])
+    parser.add_argument("--save_iterations", nargs="+", type=int, default=[70_000, 300_000])
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[])
     parser.add_argument("--start_checkpoint", type=str, default = None)
