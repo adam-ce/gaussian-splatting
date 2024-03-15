@@ -112,6 +112,8 @@ def training(model_params, opt, pipe, testing_iterations, saving_iterations, che
                 # Keep track of max radii in image-space for pruning
                 gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
                 viewspace_point_tensor_grad = screenspace_point_tensor.grad * torch.tensor((image.shape[2]/2, image.shape[1]/2, 1)).view(1, -1).to(screenspace_point_tensor.device)
+
+                # print(f"screenspace_point_tensor: {torch.max(viewspace_point_tensor_grad, dim=0)[0]}")
                 gaussians.add_densification_stats(viewspace_point_tensor_grad, visibility_filter)
 
                 if iteration > opt.densify_from_iter and iteration % opt.densification_interval == 0:
