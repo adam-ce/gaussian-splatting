@@ -9,3 +9,12 @@ screenshots
 /build*
 /eval/*
 /eval_*.csv
+grid_search_burning_ficus/*
+grid_search_chair/*
+grid_search_coloured_wdas/*
+grid_search_explosion_1/*
+grid_search_explosion_2/*
+grid_search_explosion_3/*
+grid_search_wdas_cloud_1/*
+grid_search_wdas_cloud_2/*
+grid_search_wdas_cloud_3/*
