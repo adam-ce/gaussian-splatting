@@ -1,9 +1,12 @@
+#!/usr/bin/python3
+
 import os
 from tensorboard.backend.event_processing import event_accumulator
 import numpy as np
 
-scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", ]
-grid_searches = ["grid_search_wdas_cloud_1"]
+# scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", ]
+# scenes = ["chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
+scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
 
 tb_size_guidance={ # see below regarding this argument
             event_accumulator.COMPRESSED_HISTOGRAMS: 1,

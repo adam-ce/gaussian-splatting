@@ -21,17 +21,19 @@ import os
 # rotation_lrs = [0.004, 0.002, 0.001, 0.0005, 0.00025] # 0.00025, groesser, und es konvergieren nicht mehr alle
 
 # scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", ]
-scenes = ["chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
+# scenes = ["chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
+scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
 n_init_gaussians_list = [4_000, 20_000, 100_000]
 opacity_lrs = [0.02, 0.01]  # 0.02 mit abstand
 position_lrs = [0.00032] # 0.00032 mit wenig gaussians, mit mehr gaussians fast kein unterschied
 feature_lrs = [0.0025] # 0.0025, aber weniger wichtig
 scaling_lrs = [0.005, 0.0025, 0.00125] # 0.005-0.0025, groesser, und es wird mit der zeit schlechter, bei kleineren konvergiert es langsamer, aber zuverlaessiger
 rotation_lrs = [0.0005, 0.00025, 0.000125] # 0.00025, groesser, und es konvergieren nicht mehr alle
-formulation = "ets"
+formulation = "ots"
 
 
-iteration_args = " --test_iterations 1000 2000 3000 4000 5000 6000 7000 8000 9000 10000 11000 12000 --save_iterations 12000 --iterations 12000"
+# iteration_args = " --test_iterations 1000 2000 3000 4000 5000 6000 7000 8000 9000 10000 11000 12000 --save_iterations 12000 --iterations 12000"
+iteration_args = " --test_iterations 12000 --save_iterations 12000 --iterations 12000"
 
 for scene in scenes:
     output_dir = f"./grid_search_{scene}"
