@@ -12,6 +12,7 @@
 
 import os
 import torch
+import copy
 from random import randint
 from utils.loss_utils import l1_loss, ssim
 from gaussian_renderer import render, network_gui
@@ -28,6 +29,9 @@ try:
     TENSORBOARD_FOUND = True
 except ImportError:
     TENSORBOARD_FOUND = False
+
+# renderer = 'vol_marcher'
+renderer = 'inria_splatter'
 
 def training(model_params, opt, pipe, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
     first_iter = 0
@@ -57,7 +61,9 @@ def training(model_params, opt, pipe, testing_iterations, saving_iterations, che
                 net_image_bytes = None
                 custom_cam, do_training, pipe.convert_SHs_python, pipe.compute_cov3D_python, keep_alive, scaling_modifer = network_gui.receive()
                 if custom_cam != None:
-                    net_image = render(custom_cam, gaussians, pipe, background, scaling_modifer)["render"]
+                    pipe_prime = copy.deepcopy(pipe)
+                    pipe_prime.renderer = "vol_marcher"
+                    net_image = render(custom_cam, gaussians, pipe_prime, background, scaling_modifer)["render"]
                     net_image_bytes = memoryview((torch.clamp(net_image, min=0, max=1.0) * 255).byte().permute(1, 2, 0).contiguous().cpu().numpy())
                 network_gui.send(net_image_bytes, model_params.source_path)
                 if do_training and ((iteration < int(opt.iterations)) or not keep_alive):

@@ -98,6 +98,8 @@ class PipelineParams(ParamGroup):
         self.convert_SHs_python = False
         self.compute_cov3D_python = False
         self.debug = False
+        self.renderer = "inria_splatter"
+        # self.renderer = "vol_marcher"
         super().__init__(parser, "Pipeline Parameters")
 
 class OptimizationParams(ParamGroup):

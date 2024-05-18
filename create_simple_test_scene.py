@@ -31,21 +31,21 @@ except ImportError:
 
 parser = ArgumentParser(description="Training script parameters")
 lp = ModelParams(parser)
-op = OptimizationParams(parser)
+op = OptimizationParams(parser, lp)
 pp = PipelineParams(parser)
 args = parser.parse_args(sys.argv[1:])
 
 
 # MAKE THE GAUSSIANS
-gaussians = GaussianModel(sh_degree=0)
-xyz = torch.tensor([[0.0, 0.0, 0.0], [0.3, 0.0, 0.1]]).float().cuda()
-rgb = torch.tensor([[1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]).float().cuda().unsqueeze(1)
-scales = torch.tensor([[0.5, 0.05, 0.5], [1.2, 1.2, 1.2]]).float().cuda()
+gaussians = GaussianModel(lp)
+xyz = torch.tensor([[0.0, 0.0, 0.0], [0.3, 10.0, 0.1]]).float().cuda()
+rgb = torch.tensor([[0.1, 0.1, 0.1], [0.0, 1.0, 0.0]]).float().cuda().unsqueeze(1)
+scales = torch.tensor([[0.05, 0.05, 0.05], [1.2, 1.2, 1.2]]).float().cuda()
 rots = torch.tensor([[1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0]]).float().cuda()
-opacity = torch.tensor([[0.5], [0.0]]).float().cuda()
+opacity = torch.tensor([[0.5], [0.5]]).float().cuda()
 
 scales = torch.log(scales)
-# opacity = inverse_sigmoid(opacity)
+opacity = inverse_sigmoid(opacity)
 features_dc = RGB2SH(rgb)
 
 
