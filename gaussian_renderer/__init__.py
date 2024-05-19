@@ -64,15 +64,15 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
  
 
     if pipe.renderer == "vol_marcher":
-        out_data = vol_marcher.cpp_binding.forward(shs,
-                                                   opacity,
-                                                   means3D,
-                                                   scales,
-                                                   rotations,
-                                                   viewpoint_camera.world_view_transform,
-                                                   viewpoint_camera.full_proj_transform,
-                                                   viewpoint_camera.camera_center,
-                                                   bg_color,
+        out_data = vol_marcher.cpp_binding.forward(shs.contiguous(),
+                                                   opacity.contiguous(),
+                                                   means3D.contiguous(),
+                                                   scales.contiguous(),
+                                                   rotations.contiguous(),
+                                                   viewpoint_camera.world_view_transform.contiguous(),
+                                                   viewpoint_camera.full_proj_transform.contiguous(),
+                                                   viewpoint_camera.camera_center.contiguous(),
+                                                   bg_color.contiguous(),
                                                    int(viewpoint_camera.image_width),
                                                    int(viewpoint_camera.image_height),
                                                    tanfovx,
@@ -80,9 +80,9 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
                                                    int(pc.active_sh_degree))
         rendered_image = out_data[0]
         return {"render": rendered_image,
-            "viewspace_points": torch.tensor(),
-            "visibility_filter" : torch.tensor(),
-            "radii": torch.tensor()}
+            "viewspace_points": torch.tensor(1),
+            "visibility_filter" : torch.tensor(1),
+            "radii": torch.tensor(1)}
     else:
         # Set up rasterization configuration
         raster_settings = GaussianRasterizationSettings(

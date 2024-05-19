@@ -38,11 +38,17 @@ args = parser.parse_args(sys.argv[1:])
 
 # MAKE THE GAUSSIANS
 gaussians = GaussianModel(lp)
-xyz = torch.tensor([[0.0, 0.0, 0.0], [0.3, 10.0, 0.1]]).float().cuda()
-rgb = torch.tensor([[0.1, 0.1, 0.1], [0.0, 1.0, 0.0]]).float().cuda().unsqueeze(1)
-scales = torch.tensor([[0.05, 0.05, 0.05], [1.2, 1.2, 1.2]]).float().cuda()
+# xyz = torch.tensor([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]).float().cuda()
+# rgb = torch.tensor([[0.9, 0.1, 0.1], [0.0, 1.0, 0.0]]).float().cuda().unsqueeze(1)
+# scales = torch.tensor([[0.15, 0.45, 0.25], [0.5, 0.5, 0.5]]).float().cuda()
+# rots = torch.tensor([[1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0]]).float().cuda()
+# opacity = torch.tensor([[0.8], [0.8]]).float().cuda()
+
+xyz = torch.tensor([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]).float().cuda()
+rgb = torch.tensor([[0.9, 0.1, 0.1], [0.0, 1.0, 0.0]]).float().cuda().unsqueeze(1)
+scales = torch.tensor([[0.15, 0.45, 0.5], [0.5, 0.2, 0.5]]).float().cuda()
 rots = torch.tensor([[1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0]]).float().cuda()
-opacity = torch.tensor([[0.5], [0.5]]).float().cuda()
+opacity = torch.tensor([[0.8], [0.8]]).float().cuda()
 
 scales = torch.log(scales)
 opacity = inverse_sigmoid(opacity)
@@ -70,7 +76,9 @@ full_proj_transform = (world_view_transform.unsqueeze(0).bmm(projection_matrix.u
 
 viewpoint_cam = MiniCam(800, 800, FOV, FOV, znear, zfar, world_view_transform, full_proj_transform)
 
-image = render(viewpoint_cam, gaussians, pp.extract(args),
-               bg_color=torch.tensor([0, 0, 0], dtype=torch.float32, device="cuda"))['render']
+ppe = pp.extract(args)
+# ppe.renderer = "vol_marcher"
+image = render(viewpoint_cam, gaussians, ppe,
+               bg_color=torch.tensor([0, 0, 0.5], dtype=torch.float32, device="cuda"))['render']
 torchvision.utils.save_image(image, "./output/simple_test_scene/render.png")
 gaussians.save_ply("./output/simple_test_scene/point_cloud/iteration_30000/point_cloud.ply")
