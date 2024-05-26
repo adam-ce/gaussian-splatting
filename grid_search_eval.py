@@ -1,41 +1,41 @@
-#!/usr/bin/python3
+import pandas as pd
 
-import os
-from tensorboard.backend.event_processing import event_accumulator
-import numpy as np
+def process_csv(file_path):
+    # Read the CSV file without header, assuming no column names
+    df = pd.read_csv(file_path, header=None)
 
-# scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", ]
-# scenes = ["chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
-scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
+    # Get the number of columns
+    num_columns = df.shape[1]
 
-tb_size_guidance={ # see below regarding this argument
-            event_accumulator.COMPRESSED_HISTOGRAMS: 1,
-            event_accumulator.IMAGES: 1,
-            event_accumulator.AUDIO: 1,
-            event_accumulator.SCALARS: 0, # means all
-            event_accumulator.HISTOGRAMS: 1,
-        }
+    # Group by the first two columns and select the row with the smallest value in the last column
+    result = df.loc[df.groupby([0, 1, 2])[num_columns - 1].idxmax()]
 
-with open('grid_search_eval_out.txt', 'a') as output_file:
-    for scene in scenes:
-        grid_search_directory = f"grid_search_{scene}"
-        grid_runs = os.listdir(grid_search_directory)
-        for run in grid_runs:
-            print(f"processing {grid_search_directory}/{run}")
-            params = run.split('_')
-            run_path = f"{grid_search_directory}/{run}"
-            tb_file_paths = [f"{run_path}/{p}" for p in os.listdir(f"{run_path}") if p.startswith("events.out.tfevents")]
-            if len(tb_file_paths) == 0:
-                print(f"WARNING: run {run_path}/ does not contain a tensorboard file!")
-                continue
+    return result
 
-            if len(tb_file_paths) > 1:
-                print(f"WARNING: run {run_path}/ contains multiple tensorboard file (taking first one)!")
-            
-            tb_file_path = tb_file_paths[0]
-            ea = event_accumulator.EventAccumulator(tb_file_path, tb_size_guidance)
-            ea.Reload()
-            scalars = ea.Scalars('train/loss_viewpoint - psnr')
-            PSNRs = [s.value for s in scalars]
-            output_file.write(f"{scene}, {params}, {PSNRs}\n")
-            output_file.flush()
+def count_strings_in_columns(result_df):
+    # Group by column 1
+    grouped = result_df.groupby(1)
+
+    # Count occurrences of each string in columns 6 and 7 within each group
+    counts = grouped[6].value_counts().unstack(fill_value=0), grouped[7].value_counts().unstack(fill_value=0)
+    
+    return counts
+
+# Example usage
+file_path = 'grid_search_eval_out_2.csv'
+result_df = process_csv(file_path)
+
+# Adjust display settings to see the entire DataFrame
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', None)
+pd.set_option('display.max_colwidth', None)
+
+print(result_df)
+
+counts_col_6, counts_col_7 = count_strings_in_columns(result_df)
+print("\nCounts of strings in column 6:")
+print(counts_col_6)
+
+print("\nCounts of strings in column 7:")
+print(counts_col_7)

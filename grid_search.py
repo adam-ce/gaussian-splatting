@@ -36,7 +36,7 @@ formulation = "ots"
 iteration_args = " --test_iterations 12000 --save_iterations 12000 --iterations 12000"
 
 for scene in scenes:
-    output_dir = f"./grid_search_{scene}"
+    output_dir = f"./output/grid_search_{scene}"
     common_args = f" --densify_from_iter 100000 -s /home/madam/Documents/work/tuw/gaussian_rendering/datasets/nerf_synthetic/{scene}/"
     for n_init_gaussians in n_init_gaussians_list:
         for opacity_lr in opacity_lrs:
