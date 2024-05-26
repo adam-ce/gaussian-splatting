@@ -20,13 +20,20 @@ deep_blending_scenes = []
 vienna_scenes = []
 nerf_synthetic_scenes = []
 
-mipnerf360_outdoor_scenes = ["bicycle", "flowers", "garden", "stump", "treehill"]
-mipnerf360_indoor_scenes = ["room", "counter", "kitchen", "bonsai"]
-tanks_and_temples_scenes = ["truck", "train"]
-deep_blending_scenes = ["drjohnson", "playroom"]
-vienna_scenes = ["colourlab3", "hohe_veitsch"]
+# n_gaussians_list = [3125, 6250, 12500, 25000, 50000, 100000]
+n_gaussians_list = [4000, 12000, 36000, 108000]
+algorithms = ["inria_splatter", "vol_marcher"]
+
+# mipnerf360_outdoor_scenes = ["bicycle", "flowers", "garden", "stump", "treehill"]
+# mipnerf360_indoor_scenes = ["room", "counter", "kitchen", "bonsai"]
+# tanks_and_temples_scenes = ["truck", "train"]
+# deep_blending_scenes = ["drjohnson", "playroom"]
+# vienna_scenes = ["colourlab3", "hohe_veitsch"]
 #vienna_scenes = ["insti_roof22"]
-#nerf_synthetic_scenes = ["mic", "ship"]
+# nerf_synthetic_scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
+#nerf_synthetic_scenes = ["lego", "coloured_wdas", "burning_ficus", "explosion_3", "ficus", "materials", "mic", "ship", "wdas_cloud_3", ]
+#nerf_synthetic_scenes = ["lego", "coloured_wdas", "burning_ficus", ]
+nerf_synthetic_scenes = ["explosion_3", "ficus", "materials", ]
 
 parser = ArgumentParser(description="Full evaluation script parameters")
 parser.add_argument("--skip_training", action="store_true")
@@ -56,29 +63,32 @@ if not args.skip_training or not args.skip_rendering:
     if (len(vienna_scenes) > 0):
         parser.add_argument("--tuwien", "-tuw", required=False, type=str, default="../")
     if (len(nerf_synthetic_scenes) > 0):
-        parser.add_argument("--nerfsynth", "-ns", required=False, type=str, default="../nerf_synthetic")
+        parser.add_argument("--nerfsynth", "-ns", required=False, type=str, default="/home/madam/Documents/work/tuw/gaussian_rendering/datasets/nerf_synthetic/")
     args = parser.parse_args()
 
 if not args.skip_training:
-    common_args = " --quiet --eval --test_iterations -1 "
-    for scene in mipnerf360_outdoor_scenes:
-        source = args.mipnerf360 + "/" + scene
-        os.system("python3 train.py -s " + source + " -i images_4 -m " + args.output_path + "/" + scene + common_args)
-    for scene in mipnerf360_indoor_scenes:
-        source = args.mipnerf360 + "/" + scene
-        os.system("python3 train.py -s " + source + " -i images_2 -m " + args.output_path + "/" + scene + common_args)
-    for scene in tanks_and_temples_scenes:
-        source = args.tanksandtemples + "/" + scene
-        os.system("python3 train.py -s " + source + " -m " + args.output_path + "/" + scene + common_args)
-    for scene in deep_blending_scenes:
-        source = args.deepblending + "/" + scene
-        os.system("python3 train.py -s " + source + " -m " + args.output_path + "/" + scene + common_args)
-    for scene in vienna_scenes:
-        source = args.tuwien + "/" + scene
-        os.system("python3 train.py -s " + source + " -m " + args.output_path + "/" + scene + common_args)
-    for scene in nerf_synthetic_scenes:
-        source = args.nerfsynth + "/" + scene
-        os.system("python3 train.py --white_background -s " + source + " -m " + args.output_path + "/" + scene + common_args)
+    common_args = " --quiet --eval --test_iterations -1  --save_iterations 5000 10000 15000 20000 30000 --iterations 30000 --densify_from_iter 100000 --opacity_lr 0.01 --position_lr_init 0.00032 --feature_lr 0.0025 --scaling_lr 0.005 --rotation_lr 0.000125"
+    for n_gaussians in n_gaussians_list:
+        for algorithm in algorithms:
+                config_args = f" --renderer={algorithm} --n_init_gaussians_for_synthetic {n_gaussians}"
+                for scene in mipnerf360_outdoor_scenes:
+                    source = args.mipnerf360 + "/" + scene
+                    os.system(f"python3 train.py -s {source} -i images_4 -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
+                for scene in mipnerf360_indoor_scenes:
+                    source = args.mipnerf360 + "/" + scene
+                    os.system(f"python3 train.py -s {source} -i images_2 -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
+                for scene in tanks_and_temples_scenes:
+                    source = args.tanksandtemples + "/" + scene
+                    os.system(f"python3 train.py -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
+                for scene in deep_blending_scenes:
+                    source = args.deepblending + "/" + scene
+                    os.system(f"python3 train.py -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
+                for scene in vienna_scenes:
+                    source = args.tuwien + "/" + scene
+                    os.system(f"python3 train.py -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
+                for scene in nerf_synthetic_scenes:
+                    source = args.nerfsynth + "/" + scene
+                    os.system(f"python3 train.py -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args} --white_background")
 
 if not args.skip_rendering:
     all_sources = []
@@ -97,16 +107,20 @@ if not args.skip_rendering:
 
     common_args = " --quiet --eval --skip_train"
     for scene, source in zip(all_scenes, all_sources):
-        if scene not in white_bg_scenes:
-            os.system("python3 render.py --iteration 7000 -s " + source + " -m " + args.output_path + "/" + scene + common_args)
-            os.system("python3 render.py --iteration 30000 -s " + source + " -m " + args.output_path + "/" + scene + common_args)
-        else:
-            os.system("python3 render.py --white_background --iteration 7000 -s " + source + " -m " + args.output_path + "/" + scene + common_args)
-            os.system("python3 render.py --white_background --iteration 30000 -s " + source + " -m " + args.output_path + "/" + scene + common_args)
+        for n_gaussians in n_gaussians_list:
+            for algorithm in algorithms:
+                    config_args = f" --renderer={algorithm}"
+                    for iter in [5000, 10000, 15000, 20000, 30000]:
+                        if scene not in white_bg_scenes:
+                            os.system(f"python3 render.py --iteration {iter} -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
+                        else:
+                            os.system(f"python3 render.py --white_background --iteration {iter} -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
 
 if not args.skip_metrics:
     scenes_string = ""
     for scene in all_scenes:
-        scenes_string += "\"" + args.output_path + "/" + scene + "\" "
+        for n_gaussians in n_gaussians_list:
+            for algorithm in algorithms:
+                scenes_string += f"\"{args.output_path}/{algorithm}_{n_gaussians}_{scene}\" "
 
     os.system("python3 metrics.py -m " + scenes_string)
