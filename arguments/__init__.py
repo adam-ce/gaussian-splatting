@@ -111,7 +111,6 @@ class OptimizationParams(ParamGroup):
         self.position_lr_max_steps = 30_000
         self.feature_lr = 0.0025
         self.opacity_lr = model_params.default_opacity_lr()
-        self.opacity_weight_decay = 0
         self.scaling_lr = model_params.default_scaling_lr()
         self.rotation_lr = model_params.default_rotation_lr()
         self.percent_dense = 0.01
