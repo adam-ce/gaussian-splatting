@@ -112,8 +112,8 @@ def evaluate(model_paths):
                 json.dump(full_dict[scene_dir], fp, indent=True)
             with open(scene_dir + "/per_view.json", 'w') as fp:
                 json.dump(per_view_dict[scene_dir], fp, indent=True)
-        except:
-            print("Unable to compute metrics for model", scene_dir)
+        except Exception as err:
+            print(f"Unable to compute metrics for model '{scene_dir}', reason: Unexpected {err=}, {type(err)=}\n")
     
     write_csv(ssim_dict, "./eval_ssim.csv")
     write_csv(psnr_dict, "./eval_psnr.csv")
