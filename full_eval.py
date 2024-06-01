@@ -20,9 +20,11 @@ deep_blending_scenes = []
 vienna_scenes = []
 nerf_synthetic_scenes = []
 
-# n_gaussians_list = [3125, 6250, 12500, 25000, 50000, 100000]
-n_gaussians_list = [4000, 12000, 36000, 108000]
-algorithms = ["inria_splatter", "vol_marcher"]
+# n_gaussians_list = [4000, 12000, 36000, 108000]
+# n_gaussians_list = [324000, 972000]
+n_gaussians_list = [4000, 108000]
+# algorithms = ["density_splatter", "sorted_splatter", "inria_splatter", "vol_marcher"]
+algorithms = ["vol_marcher", ]
 
 # mipnerf360_outdoor_scenes = ["bicycle", "flowers", "garden", "stump", "treehill"]
 # mipnerf360_indoor_scenes = ["room", "counter", "kitchen", "bonsai"]
@@ -31,9 +33,8 @@ algorithms = ["inria_splatter", "vol_marcher"]
 # vienna_scenes = ["colourlab3", "hohe_veitsch"]
 #vienna_scenes = ["insti_roof22"]
 # nerf_synthetic_scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
-#nerf_synthetic_scenes = ["lego", "coloured_wdas", "burning_ficus", "explosion_3", "ficus", "materials", "mic", "ship", "wdas_cloud_3", ]
-#nerf_synthetic_scenes = ["lego", "coloured_wdas", "burning_ficus", ]
-nerf_synthetic_scenes = ["explosion_3", "ficus", "materials", ]
+nerf_synthetic_scenes = ["lego", "explosion_3", "ficus", "materials", ]
+# nerf_synthetic_scenes = ["burning_ficus", "coloured_wdas", "explosion_2", "drums", ]
 
 parser = ArgumentParser(description="Full evaluation script parameters")
 parser.add_argument("--skip_training", action="store_true")
