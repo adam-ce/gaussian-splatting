@@ -37,7 +37,7 @@ class GaussianModel:
 
         self.covariance_activation = build_covariance_from_scaling_rotation
 
-        if self.formulation == 0:  # 0=original/opacity; 1=mass; 2=density; 3=ots
+        if self.formulation == 0:  # 0=original/opacity/density with (1-x approx); 1=mass; 2=density; 3=ots with exp activation
             self.opacity_activation = torch.sigmoid
             self.opacity_inverse_activation = inverse_sigmoid
         elif self.formulation == 1:
@@ -47,8 +47,8 @@ class GaussianModel:
             self.opacity_activation = nn.functional.softplus
             self.opacity_inverse_activation = inverse_softplus
         elif self.formulation == 3:
-            self.opacity_activation = torch.sigmoid
-            self.opacity_inverse_activation = inverse_sigmoid
+            self.opacity_activation = nn.functional.softplus
+            self.opacity_inverse_activation = inverse_softplus
 
         self.rotation_activation = torch.nn.functional.normalize
 
