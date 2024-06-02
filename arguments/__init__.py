@@ -47,7 +47,7 @@ class ParamGroup:
 class ModelParams(ParamGroup): 
     def __init__(self, parser, sentinel=False):
         self.sh_degree = 3
-        self.formulation = 3 # 0=original/opacity; 1=mass; 2=density; 3=ots
+        self.formulation = 3 # 0=original/opacity/density with (1-x approx); 1=mass; 2=density; 3=ots with exp activation
         self.n_init_gaussians_for_synthetic = 100_000
         self._source_path = ""
         self._model_path = ""
