@@ -33,7 +33,7 @@ algorithms = [("vol_marcher", 0.001, 3), ]
 # vienna_scenes = ["colourlab3", "hohe_veitsch"]
 #vienna_scenes = ["insti_roof22"]
 # nerf_synthetic_scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
-nerf_synthetic_scenes = ["lego", "explosion_3", "ficus", "materials", ]
+nerf_synthetic_scenes = ["lego", "explosion_3", "ficus", ]
 # nerf_synthetic_scenes = ["materials", "burning_ficus", "coloured_wdas", ]
 
 parser = ArgumentParser(description="Full evaluation script parameters")
