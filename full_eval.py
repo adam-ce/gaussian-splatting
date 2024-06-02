@@ -23,8 +23,8 @@ nerf_synthetic_scenes = []
 # n_gaussians_list = [4000, 12000, 36000, 108000]
 # n_gaussians_list = [324000, 972000]
 n_gaussians_list = [4000, 108000]
-# algorithms = ["density_splatter", "sorted_splatter", "inria_splatter", "vol_marcher"]
-algorithms = ["vol_marcher", ]
+# algorithms = [("sorted_splatter", 0.01, 0), ("sorted_splatter", 0.01, 0), ("inria_splatter", 0.01, 0), ("vol_marcher", 0.001, 3)]
+algorithms = [("vol_marcher", 0.001, 3), ]
 
 # mipnerf360_outdoor_scenes = ["bicycle", "flowers", "garden", "stump", "treehill"]
 # mipnerf360_indoor_scenes = ["room", "counter", "kitchen", "bonsai"]
@@ -34,7 +34,7 @@ algorithms = ["vol_marcher", ]
 #vienna_scenes = ["insti_roof22"]
 # nerf_synthetic_scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
 nerf_synthetic_scenes = ["lego", "explosion_3", "ficus", "materials", ]
-# nerf_synthetic_scenes = ["burning_ficus", "coloured_wdas", "explosion_2", "drums", ]
+# nerf_synthetic_scenes = ["materials", "burning_ficus", "coloured_wdas", ]
 
 parser = ArgumentParser(description="Full evaluation script parameters")
 parser.add_argument("--skip_training", action="store_true")
@@ -68,10 +68,10 @@ if not args.skip_training or not args.skip_rendering:
     args = parser.parse_args()
 
 if not args.skip_training:
-    common_args = " --quiet --eval --test_iterations -1  --save_iterations 5000 10000 15000 20000 30000 --iterations 30000 --densify_from_iter 100000 --opacity_lr 0.01 --position_lr_init 0.00032 --feature_lr 0.0025 --scaling_lr 0.005 --rotation_lr 0.000125"
+    common_args = " --quiet --eval --test_iterations -1  --save_iterations 5000 10000 15000 20000 30000 --iterations 30000 --densify_from_iter 100000 --position_lr_init 0.00032 --feature_lr 0.0025 --scaling_lr 0.005 --rotation_lr 0.000125"
     for n_gaussians in n_gaussians_list:
-        for algorithm in algorithms:
-                config_args = f" --renderer={algorithm} --n_init_gaussians_for_synthetic {n_gaussians}"
+        for algorithm, opacity_learning_rate, formulation in algorithms:
+                config_args = f" --renderer={algorithm} --opacity_lr {opacity_learning_rate} --formulation={formulation} --n_init_gaussians_for_synthetic {n_gaussians}"
                 for scene in mipnerf360_outdoor_scenes:
                     source = args.mipnerf360 + "/" + scene
                     os.system(f"python3 train.py -s {source} -i images_4 -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
@@ -109,7 +109,7 @@ if not args.skip_rendering:
     common_args = " --quiet --eval --skip_train"
     for scene, source in zip(all_scenes, all_sources):
         for n_gaussians in n_gaussians_list:
-            for algorithm in algorithms:
+            for algorithm, _, _ in algorithms:
                     config_args = f" --renderer={algorithm}"
                     for iter in [5000, 10000, 15000, 20000, 30000]:
                         if scene not in white_bg_scenes:
@@ -121,7 +121,7 @@ if not args.skip_metrics:
     scenes_string = ""
     for scene in all_scenes:
         for n_gaussians in n_gaussians_list:
-            for algorithm in algorithms:
+            for algorithm, _, _ in algorithms:
                 scenes_string += f"\"{args.output_path}/{algorithm}_{n_gaussians}_{scene}\" "
 
     os.system("python3 metrics.py -m " + scenes_string)
