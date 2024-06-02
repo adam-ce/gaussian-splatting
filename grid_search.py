@@ -25,7 +25,7 @@ import os
 # scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
 scenes = ["lego", "explosion_3", ]
 n_init_gaussians_list = [36_000, ]
-opacity_lrs = [0.01, 0.005, 0.0025, 0.00125]  # 0.02 mit abstand
+opacity_lrs = [0.001, 0.0005, 0.00025, ]  # 0.02 mit abstand
 position_lrs = [0.00032, ] # 0.00032 mit wenig gaussians, mit mehr gaussians fast kein unterschied
 feature_lrs = [0.0025, ] # 0.0025, aber weniger wichtig
 scaling_lrs = [0.005, ] # 0.005-0.0025, groesser, und es wird mit der zeit schlechter, bei kleineren konvergiert es langsamer, aber zuverlaessiger
@@ -38,7 +38,7 @@ iteration_args = " --test_iterations 30000 --save_iterations 30000 --iterations 
 
 for scene in scenes:
     output_dir = f"./output/grid_search/{scene}"
-    common_args = f" --densify_from_iter 100000 --renderer=vol_marcher -s /home/madam/Documents/work/tuw/gaussian_rendering/datasets/nerf_synthetic/{scene}/"
+    common_args = f" --densify_from_iter 100000 --renderer=vol_marcher --eval -s /home/madam/Documents/work/tuw/gaussian_rendering/datasets/nerf_synthetic/{scene}/"
     for n_init_gaussians in n_init_gaussians_list:
         for opacity_lr in opacity_lrs:
             for position_lr in position_lrs:
