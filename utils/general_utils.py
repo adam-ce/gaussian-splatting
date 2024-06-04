@@ -21,6 +21,9 @@ def inverse_sigmoid(x):
 def inverse_softplus(x):
     return x + torch.log(-torch.expm1(-x))
 
+def inverse_relu(x):
+    return x
+
 def PILtoTorch(pil_image, resolution):
     resized_image_PIL = pil_image.resize(resolution)
     resized_image = torch.from_numpy(np.array(resized_image_PIL)) / 255.0

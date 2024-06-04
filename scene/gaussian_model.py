@@ -12,7 +12,7 @@
 import math
 import torch
 import numpy as np
-from utils.general_utils import inverse_sigmoid, inverse_softplus, get_expon_lr_func, build_rotation
+from utils.general_utils import inverse_sigmoid, inverse_softplus, inverse_relu, get_expon_lr_func, build_rotation
 from torch import nn
 import os
 from utils.system_utils import mkdir_p
@@ -22,6 +22,9 @@ from simple_knn._C import distCUDA2
 from utils.graphics_utils import BasicPointCloud
 from utils.general_utils import strip_symmetric, build_scaling_rotation
 from arguments import ModelParams
+
+def inverse_softplus_beta(y, beta):
+    return (1 / beta) * torch.log(torch.exp(beta * y) - 1)
 
 class GaussianModel:
 
@@ -47,8 +50,13 @@ class GaussianModel:
             self.opacity_activation = nn.functional.softplus
             self.opacity_inverse_activation = inverse_softplus
         elif self.formulation == 3:
-            self.opacity_activation = nn.functional.softplus
-            self.opacity_inverse_activation = inverse_softplus
+            def my_softplus(x):
+                return nn.functional.softplus(x, self.opacity_softplus_beta)
+
+            def my_inverse_softplus(y):
+                return inverse_softplus_beta(y, self.opacity_softplus_beta)
+            self.opacity_activation = my_softplus
+            self.opacity_inverse_activation = my_inverse_softplus
 
         self.rotation_activation = torch.nn.functional.normalize
 
@@ -69,6 +77,7 @@ class GaussianModel:
         self.percent_dense = 0
         self.spatial_lr_scale = 0
         self.formulation = model_params.formulation
+        self.opacity_softplus_beta = model_params.opacity_softplus_beta
         self.setup_functions()
 
     def capture(self):
