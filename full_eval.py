@@ -20,9 +20,9 @@ deep_blending_scenes = []
 vienna_scenes = []
 nerf_synthetic_scenes = []
 
-# n_gaussians_list = [4000, 12000, 36000, 108000]
+n_gaussians_list = [4000, 12000, 36000, 108000]
 # n_gaussians_list = [324000, 972000]
-n_gaussians_list = [4000, 108000]
+# n_gaussians_list = [4000, 108000, ]
 # algorithms = [("sorted_splatter", 0.01, 0), ("sorted_splatter", 0.01, 0), ("inria_splatter", 0.01, 0), ("vol_marcher", 0.001, 3)]
 algorithms = [("vol_marcher", 0.001, 3), ]
 
@@ -33,12 +33,18 @@ algorithms = [("vol_marcher", 0.001, 3), ]
 # vienna_scenes = ["colourlab3", "hohe_veitsch"]
 #vienna_scenes = ["insti_roof22"]
 # nerf_synthetic_scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
-nerf_synthetic_scenes = ["lego", "explosion_3", "ficus", ] # gataki
-#nerf_synthetic_scenes = ["materials", "burning_ficus", "coloured_wdas", ] # king-crimson
-#nerf_synthetic_scenes = ["explosion_1", "explosion_2",, "wdas_cloud_1", ] # openstack gs1
-#nerf_synthetic_scenes = ["wdas_cloud_2", "wdas_cloud_3", "chair", ] # openstack gs2
-#nerf_synthetic_scenes = ["drums", "hotdog", "mic", ] # openstack gs3
+nerf_synthetic_scenes = ["lego", "explosion_3", ] # gataki
+nerf_synthetic_scenes = ["ficus", "materials", ] # king-crimson
+#nerf_synthetic_scenes = ["burning_ficus", ] # openstack gs1
+#nerf_synthetic_scenes = ["coloured_wdas", ] # openstack gs2
+#nerf_synthetic_scenes = ["explosion_1", ] # openstack gs3
+#nerf_synthetic_scenes = ["explosion_2", ] # openstack gs4
+#nerf_synthetic_scenes = ["wdas_cloud_1", ] # openstack gs5
+#nerf_synthetic_scenes = ["wdas_cloud_2", ] # openstack gs6
+#nerf_synthetic_scenes = ["wdas_cloud_3", ] # openstack gs7
+#nerf_synthetic_scenes = ["chair", ] # openstack gs8
 #nerf_synthetic_scenes = ["ship", ] # madams-workstation
+
 
 parser = ArgumentParser(description="Full evaluation script parameters")
 parser.add_argument("--skip_training", action="store_true")
@@ -110,7 +116,7 @@ if not args.skip_rendering:
     for scene in nerf_synthetic_scenes:
         all_sources.append(args.nerfsynth + "/" + scene)
 
-    common_args = " --quiet --eval --skip_train"
+    common_args = " --quiet --eval"
     for scene, source in zip(all_scenes, all_sources):
         for n_gaussians in n_gaussians_list:
             for algorithm, _, _ in algorithms:
