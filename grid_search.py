@@ -23,17 +23,17 @@ import os
 # scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", ]
 # scenes = ["chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
 # scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
-scenes = ["ficus", ]
+scenes = ["explosion_3", ]
 n_init_gaussians_list = [36_000, ]
 opacity_lrs = [0.001, ]
 position_lrs = [0.00032, ] # 0.00032 mit wenig gaussians, mit mehr gaussians fast kein unterschied
-feature_lrs = [0.0025, ] # 0.0025, aber weniger wichtig
+feature_lrs = [0.0025, 0.00125, 0.000625, ] # 0.0025, aber weniger wichtig
 scaling_lrs = [0.005, ] # 0.005-0.0025, groesser, und es wird mit der zeit schlechter, bei kleineren konvergiert es langsamer, aber zuverlaessiger
 rotation_lrs = [0.000125, ] # 0.00025, groesser, und es konvergieren nicht mehr alle
 
 algorithm = "vol_marcher"
 formulation = 3
-opacity_softplus_betas = [99, ]#1.1, 1.2, 
+opacity_softplus_betas = [10, ]#1.1, 1.2, 
 
 
 # iteration_args = " --test_iterations 1000 2000 3000 4000 5000 6000 7000 8000 9000 10000 11000 12000 --save_iterations 12000 --iterations 12000"
