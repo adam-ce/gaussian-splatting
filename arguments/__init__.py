@@ -65,12 +65,14 @@ class ModelParams(ParamGroup):
         return g
     
     def default_opacity_lr(self):
+        if self.formulation == 0:
+            return 0.05
         if self.formulation == 1:
             return 0.005
         if self.formulation == 2:
             return 0.013
         if self.formulation == 3:
-            return 0.02
+            return 0.001
         return 0.05
     
     def default_position_lr(self):
@@ -79,13 +81,11 @@ class ModelParams(ParamGroup):
         return 0.00016
     
     def default_scaling_lr(self):
-        if self.formulation == 3:
-            return 0.0025
         return 0.005
     
     def default_rotation_lr(self):
         if self.formulation == 3:
-            return 0.00025
+            return 0.000125
         return 0.001
     
     def default_densify_grad_threshold(self):
