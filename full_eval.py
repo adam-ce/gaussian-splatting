@@ -20,11 +20,11 @@ deep_blending_scenes = []
 vienna_scenes = []
 nerf_synthetic_scenes = []
 
-n_gaussians_list = [4000, 12000, 36000, 108000]
-# n_gaussians_list = [324000, 972000]
-# n_gaussians_list = [4000, 108000, ]
+n_gaussians_list = [4000, 12000, 36000, 108000, 324000, 972000]
+n_gaussians_list = [108003, ]
 # algorithms = [("sorted_splatter", 0.01, 0), ("sorted_splatter", 0.01, 0), ("inria_splatter", 0.01, 0), ("vol_marcher", 0.001, 3)]
-algorithms = [("vol_marcher", 0.001, 3), ]
+# algorithms = [("vol_marcher", 0.001, 3), ]
+algorithms = [("inria_splatter", 0.01, 0), ]
 
 # mipnerf360_outdoor_scenes = ["bicycle", "flowers", "garden", "stump", "treehill"]
 # mipnerf360_indoor_scenes = ["room", "counter", "kitchen", "bonsai"]
@@ -33,17 +33,9 @@ algorithms = [("vol_marcher", 0.001, 3), ]
 # vienna_scenes = ["colourlab3", "hohe_veitsch"]
 #vienna_scenes = ["insti_roof22"]
 # nerf_synthetic_scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
-nerf_synthetic_scenes = ["lego", "explosion_3", ] # gataki
-nerf_synthetic_scenes = ["ficus", "materials", ] # king-crimson
-#nerf_synthetic_scenes = ["burning_ficus", ] # openstack gs1
-#nerf_synthetic_scenes = ["coloured_wdas", ] # openstack gs2
-#nerf_synthetic_scenes = ["explosion_1", ] # openstack gs3
-#nerf_synthetic_scenes = ["explosion_2", ] # openstack gs4
-#nerf_synthetic_scenes = ["wdas_cloud_1", ] # openstack gs5
-#nerf_synthetic_scenes = ["wdas_cloud_2", ] # openstack gs6
-#nerf_synthetic_scenes = ["wdas_cloud_3", ] # openstack gs7
-#nerf_synthetic_scenes = ["chair", ] # openstack gs8
-#nerf_synthetic_scenes = ["ship", ] # madams-workstation
+# nerf_synthetic_scenes = ["explosion_3", "materials", "lego", "ficus", ] # gataki
+# nerf_synthetic_scenes = ["ficus", "materials", "coloured_wdas", ] # king-crimson
+nerf_synthetic_scenes = ["as", "df"] # openstack gs1
 
 
 parser = ArgumentParser(description="Full evaluation script parameters")
@@ -51,7 +43,11 @@ parser.add_argument("--skip_training", action="store_true")
 parser.add_argument("--skip_rendering", action="store_true")
 parser.add_argument("--skip_metrics", action="store_true")
 parser.add_argument("--output_path", default="./eval")
+parser.add_argument("--ns_scenes", nargs="+", default=[], help="List of scenes for nerfsynth")
 args, _ = parser.parse_known_args()
+
+if args.ns_scenes:
+    nerf_synthetic_scenes = args.ns_scenes
 
 all_scenes = []
 all_scenes.extend(mipnerf360_outdoor_scenes)
