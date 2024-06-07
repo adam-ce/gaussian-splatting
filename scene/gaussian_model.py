@@ -232,9 +232,9 @@ class GaussianModel:
         normals = np.zeros_like(xyz)
         f_dc = self._features_dc.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
         f_rest = self._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
-        opacities = self.get_opacity().detach().cpu().numpy()
-        scale = self.get_scaling().detach().cpu().numpy()
-        rotation = self.get_rotation().detach().cpu().numpy()
+        opacities = self.get_opacity.detach().cpu().numpy()
+        scale = self.get_scaling.detach().cpu().numpy()
+        rotation = self.get_rotation.detach().cpu().numpy()
 
         dtype_full = [(attribute, 'f4') for attribute in self.construct_list_of_attributes()]
 
