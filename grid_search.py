@@ -23,11 +23,11 @@ import os
 # scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", ]
 # scenes = ["chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
 # scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
-scenes = ["explosion_3", ]
+scenes = ["burning_ficus", "lego","ficus",  ]
 n_init_gaussians_list = [36_000, ]
 opacity_lrs = [0.001, ]
 position_lrs = [0.00032, ] # 0.00032 mit wenig gaussians, mit mehr gaussians fast kein unterschied
-feature_lrs = [0.0025, 0.00125, 0.000625, ] # 0.0025, aber weniger wichtig
+feature_lrs = [0.0025, ] # 0.0025, aber weniger wichtig
 scaling_lrs = [0.005, ] # 0.005-0.0025, groesser, und es wird mit der zeit schlechter, bei kleineren konvergiert es langsamer, aber zuverlaessiger
 rotation_lrs = [0.000125, ] # 0.00025, groesser, und es konvergieren nicht mehr alle
 
