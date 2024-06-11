@@ -154,31 +154,42 @@ class GaussianModel:
         print("Number of points at initialisation : ", fused_point_cloud.shape[0])
 
         dist2 = torch.clamp_min(distCUDA2(torch.from_numpy(np.asarray(pcd.points)).float().cuda()), 0.0000001)
-        scales = torch.log(torch.sqrt(dist2))[...,None].repeat(1, 3)
+        scales = torch.sqrt(dist2)[...,None].repeat(1, 3)
         rots = torch.zeros((fused_point_cloud.shape[0], 4), device="cuda")
         rots[:, 0] = 1
 
 
         if self.formulation == 0:  # 0=original/opacity; 1=mass; 2=density; 3=ots
-            opacities = (0.1 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
+            opacities = (0.01 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
+            # hack for nerf synthetic dataset (other datasets untested)
+            # we want a constant density, regardless of the number of gaussians that fill the unit cube
+            opacities = ((1.0 / (fused_point_cloud.shape[0])**0.33) * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
         elif self.formulation == 1:
             opacities = (0.005 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
-            dets_covs = torch.prod(torch.exp(scales), -1, keepdim=True)
+            dets_covs = torch.prod(scales, -1, keepdim=True)
             opacities = opacities * (torch.sqrt(dets_covs) * (2 * math.pi) ** 3/2)
             raise NotImplementedError("Please test this one again. before iteration 0, the rendering should look approx the same as original.")
         elif self.formulation == 2:
-            exp3d_integral = ((2 * math.pi)**(3/2)) * torch.abs(torch.prod(torch.exp(scales), -1, keepdim=True)) # scales are SDs in eigen vector directions
-            exp2d_integral = 2 * math.pi * torch.abs(torch.prod(torch.exp(scales[:, :2]), -1, keepdim=True))
+            opacities = (0.1 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
+            exp3d_integral = ((2 * math.pi)**(3/2)) * torch.abs(torch.prod(scales, -1, keepdim=True)) # scales are SDs in eigen vector directions
+            exp2d_integral = 2 * math.pi * torch.abs(torch.prod(scales[:, :2], -1, keepdim=True))
             opacities = opacities * exp2d_integral / exp3d_integral
+            raise NotImplementedError("Please test this one again. before iteration 0, the rendering should look approx the same as original.")
         elif self.formulation == 3:
             opacities = (0.1 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
+            # hack for nerf synthetic dataset (other datasets untested)
+            # we want a constant density, regardless of the number of gaussians that fill the unit cube
+            opacities = ((2.0 / (fused_point_cloud.shape[0])**0.5) * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
+            exp3d_integral = ((2 * math.pi)**(3/2)) * torch.abs(torch.prod(scales, -1, keepdim=True)) # scales are SDs in eigen vector directions
+            exp2d_integral = 2 * math.pi * torch.abs(torch.prod(scales[:, :2], -1, keepdim=True))
+            opacities = opacities * exp2d_integral / exp3d_integral
         
         opacities = self.opacity_inverse_activation(opacities)
 
         self._xyz = nn.Parameter(fused_point_cloud.requires_grad_(True))
         self._features_dc = nn.Parameter(features[:,:,0:1].transpose(1, 2).contiguous().requires_grad_(True))
         self._features_rest = nn.Parameter(features[:,:,1:].transpose(1, 2).contiguous().requires_grad_(True))
-        self._scaling = nn.Parameter(scales.requires_grad_(True))
+        self._scaling = nn.Parameter(self.scaling_inverse_activation(scales).requires_grad_(True))
         self._rotation = nn.Parameter(rots.requires_grad_(True))
         self._opacity = nn.Parameter(opacities.requires_grad_(True))
         self.max_radii2D = torch.zeros((self.get_xyz.shape[0]), device="cuda")
