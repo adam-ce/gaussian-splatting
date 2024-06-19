@@ -95,7 +95,7 @@ if not args.skip_training:
                     os.system(f"python3 train.py -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
                 for scene in nerf_synthetic_scenes:
                     source = args.nerfsynth + "/" + scene
-                    os.system(f"python3 train.py -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args} --white_background")
+                    os.system(f"python3 train.py -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
 
 if not args.skip_rendering:
     all_sources = []
@@ -121,7 +121,7 @@ if not args.skip_rendering:
                         if scene not in white_bg_scenes:
                             os.system(f"python3 render.py --iteration {iter} -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
                         else:
-                            os.system(f"python3 render.py --white_background --iteration {iter} -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
+                            os.system(f"python3 render.py --background white --iteration {iter} -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
 
 if not args.skip_metrics:
     scenes_string = ""
