@@ -33,7 +33,7 @@ algorithms = [("vol_marcher", 0.001, 3), ]
 # vienna_scenes = ["colourlab3", "hohe_veitsch"]
 #vienna_scenes = ["insti_roof22"]
 # nerf_synthetic_scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
-nerf_synthetic_scenes = ["ficus", "hotdog", "lego", "ship",] # gataki
+nerf_synthetic_scenes = ["ficus", "hotdog", ] # gataki
 # nerf_synthetic_scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "materials", "mic"] # gs1-10
 # nerf_synthetic_scenes = ["materials", "mic"] # king
 
@@ -76,6 +76,8 @@ if not args.skip_training or not args.skip_rendering:
 if not args.skip_training:
     common_args = " --quiet --eval --test_iterations -1  --save_iterations 5000 10000 15000 20000 30000 --iterations 30000 --densify_from_iter 10000000 --position_lr_init 0.00032 --feature_lr 0.0025 --scaling_lr 0.005 --rotation_lr 0.000125"
     for n_gaussians in n_gaussians_list:
+        if n_gaussians < 36000:
+            continue
         for algorithm, opacity_learning_rate, formulation in algorithms:
                 config_args = f" --renderer={algorithm} --opacity_lr {opacity_learning_rate} --formulation={formulation} --n_init_gaussians_for_synthetic {n_gaussians}"
                 for scene in mipnerf360_outdoor_scenes:
@@ -94,6 +96,8 @@ if not args.skip_training:
                     source = args.tuwien + "/" + scene
                     os.system(f"python3 train.py -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
                 for scene in nerf_synthetic_scenes:
+                    if n_gaussians < 108000 and (scene == "hotdog" or scene == "ficus"):
+                        continue
                     source = args.nerfsynth + "/" + scene
                     os.system(f"python3 train.py -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
 
