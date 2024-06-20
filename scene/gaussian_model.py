@@ -163,7 +163,7 @@ class GaussianModel:
             opacities = (0.01 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
             # hack for nerf synthetic dataset (other datasets untested)
             # we want a constant density, regardless of the number of gaussians that fill the unit cube
-            opacities = ((1.0 / (fused_point_cloud.shape[0])**0.33) * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
+            opacities = ((2. / (fused_point_cloud.shape[0])**0.35) * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
         elif self.formulation == 1:
             opacities = (0.005 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
             dets_covs = torch.prod(scales, -1, keepdim=True)
