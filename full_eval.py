@@ -100,6 +100,8 @@ if not args.skip_training:
                         continue
                     if n_gaussians < 36000 and (scene == "materials"):
                         continue
+                    if n_gaussians < 300000 and (scene == "wdas_cloud_1" or scene == "wdas_cloud_2" or scene == "wdas_cloud_3"):
+                        continue
                     source = args.nerfsynth + "/" + scene
                     os.system(f"python3 train.py -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
 
