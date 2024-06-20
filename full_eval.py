@@ -98,6 +98,8 @@ if not args.skip_training:
                         continue
                     if n_gaussians < 12000 and (scene == "mic"):
                         continue
+                    if n_gaussians < 36000 and (scene == "materials"):
+                        continue
                     source = args.nerfsynth + "/" + scene
                     os.system(f"python3 train.py -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
 
