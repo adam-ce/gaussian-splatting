@@ -94,10 +94,6 @@ if not args.skip_training:
                     source = args.tuwien + "/" + scene
                     os.system(f"python3 train.py -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
                 for scene in nerf_synthetic_scenes:
-                    if n_gaussians < 108000 and (scene == "hotdog" or scene == "ficus"):
-                        continue
-                    if n_gaussians < 300000 and (scene == "wdas_cloud_1" or scene == "wdas_cloud_2" or scene == "wdas_cloud_3"):
-                        continue
                     source = args.nerfsynth + "/" + scene
                     os.system(f"python3 train.py -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
 
