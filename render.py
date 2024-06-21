@@ -59,6 +59,8 @@ if __name__ == "__main__":
     parser.add_argument("--quiet", action="store_true")
     args = get_combined_args(parser)
     print("Rendering " + args.model_path)
+    print(f"renderer is {pipeline.renderer}")
+    print(f"formulation is {model.formulation}")
 
     # Initialize system state (RNG)
     safe_state(args.quiet)

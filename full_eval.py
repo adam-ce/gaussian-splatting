@@ -116,8 +116,8 @@ if not args.skip_rendering:
     common_args = " --quiet --eval"
     for scene, source in zip(all_scenes, all_sources):
         for n_gaussians in n_gaussians_list:
-            for algorithm, _, _ in algorithms:
-                    config_args = f" --renderer={algorithm}"
+            for algorithm, _, formulation in algorithms:
+                    config_args = f" --renderer={algorithm} --formulation {formulation}"
                     for iter in [5000, 10000, 15000, 20000, 30000]:
                         if scene not in white_bg_scenes:
                             os.system(f"python3 render.py --iteration {iter} -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")

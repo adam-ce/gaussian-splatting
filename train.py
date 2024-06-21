@@ -35,6 +35,7 @@ def training(model_params, opt, pipe, testing_iterations, saving_iterations, che
     first_iter = 0
     tb_writer = prepare_output_and_logger(model_params)
     gaussians = GaussianModel(model_params)
+    print(f"\nformulation is {model_params.formulation}\n")
     scene = Scene(model_params, gaussians)
     gaussians.training_setup(opt)
     if checkpoint:
