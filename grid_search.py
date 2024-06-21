@@ -50,13 +50,13 @@ formulation = 3
 basepath = "/home/madam/Documents/work/tuw/gaussian_rendering/datasets/nerf_synthetic"
 
 parser = ArgumentParser(description="Grid search script parameters")
-parser.add_argument("--opacity_lrs", nargs="+", default=[], help="..")
-parser.add_argument("--position_lrs", nargs="+", default=[], help="..")
-parser.add_argument("--feature_lrs", nargs="+", default=[], help="..")
-parser.add_argument("--scaling_lrs", nargs="+", default=[], help="..")
-parser.add_argument("--rotation_lrs", nargs="+", default=[], help="..")
-parser.add_argument("--scenes", nargs="+", default=[], help="..")
-parser.add_argument("--nerfsynth", "-ns", required=False, type=str, default="/home/madam/Documents/work/tuw/gaussian_rendering/datasets/nerf_synthetic/")
+parser.add_argument("--opacity_lrs", nargs="+", type=float, default=[], help="Opacity learning rates")
+parser.add_argument("--position_lrs", nargs="+", type=float, default=[], help="Position learning rates")
+parser.add_argument("--feature_lrs", nargs="+", type=float, default=[], help="Feature learning rates")
+parser.add_argument("--scaling_lrs", nargs="+", type=float, default=[], help="Scaling learning rates")
+parser.add_argument("--rotation_lrs", nargs="+", type=float, default=[], help="Rotation learning rates")
+parser.add_argument("--scenes", nargs="+", default=[], help="Scene names")
+parser.add_argument("--nerfsynth", "-ns", type=str, default=basepath, help="Path to NeRF synthetic dataset")
 args, _ = parser.parse_known_args()
 
 if args.opacity_lrs:
