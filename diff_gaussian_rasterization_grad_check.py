@@ -35,15 +35,31 @@ args = parser.parse_args(sys.argv[1:])
 r = 0.6
 a = 0.9
 s = 0.4
-xyz = torch.tensor([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.5, 0.5], [0.5, 0.0, 1.0]]).float().cuda()
-rgb = torch.tensor([[0.0, 0.0, 0.0], [r, 0.0, 0.0], [0.0, r, 0.0], [0.0, 0.0, r]]).float().cuda().unsqueeze(1)
-scales = torch.tensor([[s*0.8, s*1.1, s*1.2], [s*0.9, s*1.2, s*0.7], [s*0.9, s*1.2, s*1.3], [s*1.4, s*0.8, s*0.7]]).float().cuda()
-rots = torch.tensor([[1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0]]).float().cuda()
-opacity = torch.tensor([[a], [a], [a], [a]]).float().cuda()
+xyz = torch.tensor([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.5, 0.5], [0.5, 0.0, 1.0]]).double().cuda()
+rgb = torch.tensor([[0.02, 0.02, 0.02], [r, 0.02, 0.02], [0.02, r, 0.02], [0.02, 0.02, r]]).double().cuda().unsqueeze(1)
+scales = torch.tensor([[s*0.8, s*1.1, s*1.2], [s*0.9, s*1.2, s*0.7], [s*0.9, s*1.2, s*1.3], [s*1.4, s*0.8, s*0.7]]).double().cuda()
+rots = torch.tensor([[1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0]]).double().cuda()
+opacity = torch.tensor([[a], [a], [a], [a]]).double().cuda()
+
+
+# xyz = torch.tensor([[0.0, 0.0, 0.0], [1.0, 0.1, 0.2], ]).double().cuda()
+# rgb = torch.tensor([[0.02, 0.02, 0.02], [r, 0.02, 0.02], ]).double().cuda().unsqueeze(1)
+# scales = torch.tensor([[s*0.8, s*1.1, s*1.2], [s*0.9, s*1.2, s*0.7], ]).double().cuda()
+# rots = torch.tensor([[1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], ]).double().cuda()
+# opacity = torch.tensor([[a], [a]]).double().cuda()
+
+
+# xyz = torch.tensor([[0.0, 0.0, 0.0], ]).double().cuda()
+# rgb = torch.tensor([[0.02, 0.52, 0.82], ]).double().cuda().unsqueeze(1)
+# scales = torch.tensor([[1, 2.5, 5], ]).double().cuda()
+# rots = torch.tensor([[1.0, 0.5, 0.8, 0.2], ]).double().cuda()
+# opacity = torch.tensor([[a], ]).double().cuda()
+
+
 
 scales = torch.log(scales)
-features_dc = RGB2SH(rgb)
-features_rest = torch.zeros((features_dc.shape[0], 0, 3)).float().cuda()
+features_dc = RGB2SH(rgb).double()
+features_rest = torch.zeros((features_dc.shape[0], 0, 3)).double().cuda()
 
 
 xyz.requires_grad = True
@@ -66,10 +82,13 @@ projection_matrix = getProjectionMatrix(znear=znear, zfar=zfar, fovX=FOV,
                                         fovY=FOV).transpose(0, 1).cuda()
 full_proj_transform = (world_view_transform.unsqueeze(0).bmm(projection_matrix.unsqueeze(0))).squeeze(0)
 
-viewpoint_cam = MiniCam(6, 6, FOV, FOV, znear, zfar, world_view_transform, full_proj_transform)
+viewpoint_cam = MiniCam(5, 5, FOV, FOV, znear, zfar, world_view_transform, full_proj_transform)
+viewpoint_cam.world_view_transform = viewpoint_cam.world_view_transform.to(torch.float64)
+viewpoint_cam.full_proj_transform = viewpoint_cam.full_proj_transform.to(torch.float64)
+viewpoint_cam.camera_center = viewpoint_cam.camera_center.to(torch.float64)
 
 ppe = pp.extract(args)
-# ppe.renderer = "vol_marcher"
+ppe.renderer = "vol_marcher"
 background = torch.tensor([0.9, 0.7, 0.4], dtype=torch.float32, device="cuda")
 bg_color=background
 
@@ -81,10 +100,11 @@ def render_wrapper(xyz, features_dc, features_rest, scales, rots, opacity):
     gaussians._scaling = scales
     gaussians._rotation = rots
     gaussians._opacity = opacity
-    return render(viewpoint_cam, gaussians, ppe, bg_color=background)['render']
+    return render(viewpoint_cam, gaussians, ppe, bg_color=background.to(torch.float64))['render']
 
 image = render_wrapper(xyz, features_dc, features_rest, scales, rots, opacity)
 torchvision.utils.save_image(image, "./output/diff_gaussian_rasterization_grad_check_render.png")
 
-# defaults: eps=1e-06, atol=1e-05, rtol=0.001, but we have float
-gradcheck(render_wrapper, (xyz, features_dc, features_rest, scales, rots, opacity), eps=1e-04, atol=1e-01, rtol=0.1)
+# defaults: eps=1e-06, atol=1e-05, rtol=0.001
+gradcheck(render_wrapper, (xyz, features_dc, features_rest, scales, rots, opacity), eps=1e-6, atol=3.6e-03, rtol=0.001, check_undefined_grad=False)
+print("done.. :D")
