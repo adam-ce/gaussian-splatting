@@ -27,7 +27,7 @@ from argparse import ArgumentParser
 # scenes = ["burning_ficus", "lego", "drums", "explosion_3",]
 
 
-scenes = ["burning_ficus", "lego", "drums", "explosion_3",]
+scenes = ["burning_ficus", "lego", "drums", "explosion_3", "materials"]
 n_init_gaussians_list = [60_000, ]
 
 # opacity_lrs = [0.05, 0.01, 0.005, 0.001, 0.0005, ]
@@ -44,8 +44,8 @@ scaling_lrs = [0.005, ]
 rotation_lrs = [0.000125, ]
 opacity_softplus_betas = [2.0, ]
 
-algorithm = "self_shadowed_splatter"
-formulation = 3
+algorithm = "inria_splatter"
+formulation = 0
 
 basepath = "/home/madam/Documents/work/tuw/gaussian_rendering/datasets/nerf_synthetic"
 
@@ -77,6 +77,121 @@ if args.nerfsynth:
 # iteration_args = " --test_iterations 1000 2000 3000 4000 5000 6000 7000 8000 9000 10000 11000 12000 --save_iterations 12000 --iterations 12000"
 iteration_args = " --test_iterations 30000 --save_iterations 30000 --iterations 30000"
 
+# for scene in scenes:
+#     output_dir = f"./output/grid_search/{scene}"
+#     common_args = f" --densify_from_iter 1000000 --renderer={algorithm} --eval -s {basepath}/{scene}/"
+#     render_command = f"python3 render.py --background random --iteration 30000 -s {basepath}/{scene}/"
+#     for n_init_gaussians in n_init_gaussians_list:
+#         for opacity_lr in opacity_lrs:
+#             for position_lr in position_lrs:
+#                 for feature_lr in feature_lrs:
+#                     for scaling_lr in scaling_lrs:
+#                         for rotation_lr in rotation_lrs:
+#                             for opacity_softplus_beta in opacity_softplus_betas:
+#                                 output_path = f"{output_dir}_{algorithm}{formulation}_n{n_init_gaussians}_o{opacity_lr}_b{opacity_softplus_beta}_p{position_lr}_f{feature_lr}_s{scaling_lr}_r{rotation_lr}"
+#                                 grid_args_1 = f"--n_init_gaussians_for_synthetic {n_init_gaussians} --opacity_lr {opacity_lr}"
+#                                 grid_args_2 = f"--position_lr_init {position_lr} --position_lr_final {position_lr * 0.01} --feature_lr {feature_lr} --scaling_lr {scaling_lr} --rotation_lr {rotation_lr}"
+#                                 grid_args_render = f"--renderer={algorithm} --formulation {formulation} --opacity_softplus_beta {opacity_softplus_beta}"
+#                                 command = f"python3 train.py {common_args} {iteration_args} {grid_args_1} {grid_args_2} {grid_args_render} -m {output_path}"
+#                                 print(f"=========================================\n{command}")
+#                                 os.system(command)
+#                                 # os.system(f"{render_command} -m {output_path} {grid_args_render} --quiet --eval --skip_train")
+
+# opacity_lrs = [0.05, 0.01, 0.005, 0.001, 0.0005, ]
+
+# for scene in scenes:
+#     output_dir = f"./output/grid_search/{scene}"
+#     common_args = f" --densify_from_iter 1000000 --renderer={algorithm} --eval -s {basepath}/{scene}/"
+#     render_command = f"python3 render.py --background random --iteration 30000 -s {basepath}/{scene}/"
+#     for n_init_gaussians in n_init_gaussians_list:
+#         for opacity_lr in opacity_lrs:
+#             for position_lr in position_lrs:
+#                 for feature_lr in feature_lrs:
+#                     for scaling_lr in scaling_lrs:
+#                         for rotation_lr in rotation_lrs:
+#                             for opacity_softplus_beta in opacity_softplus_betas:
+#                                 output_path = f"{output_dir}_{algorithm}{formulation}_n{n_init_gaussians}_o{opacity_lr}_b{opacity_softplus_beta}_p{position_lr}_f{feature_lr}_s{scaling_lr}_r{rotation_lr}"
+#                                 grid_args_1 = f"--n_init_gaussians_for_synthetic {n_init_gaussians} --opacity_lr {opacity_lr}"
+#                                 grid_args_2 = f"--position_lr_init {position_lr} --position_lr_final {position_lr * 0.01} --feature_lr {feature_lr} --scaling_lr {scaling_lr} --rotation_lr {rotation_lr}"
+#                                 grid_args_render = f"--renderer={algorithm} --formulation {formulation} --opacity_softplus_beta {opacity_softplus_beta}"
+#                                 command = f"python3 train.py {common_args} {iteration_args} {grid_args_1} {grid_args_2} {grid_args_render} -m {output_path}"
+#                                 print(f"=========================================\n{command}")
+#                                 os.system(command)
+#                                 # os.system(f"{render_command} -m {output_path} {grid_args_render} --quiet --eval --skip_train")
+
+# opacity_lrs = [0.001, ]
+
+
+# position_lrs = [0.00032, 0.00016, 0.00008, ] # 0.00032
+
+# for scene in scenes:
+#     output_dir = f"./output/grid_search/{scene}"
+#     common_args = f" --densify_from_iter 1000000 --renderer={algorithm} --eval -s {basepath}/{scene}/"
+#     render_command = f"python3 render.py --background random --iteration 30000 -s {basepath}/{scene}/"
+#     for n_init_gaussians in n_init_gaussians_list:
+#         for opacity_lr in opacity_lrs:
+#             for position_lr in position_lrs:
+#                 for feature_lr in feature_lrs:
+#                     for scaling_lr in scaling_lrs:
+#                         for rotation_lr in rotation_lrs:
+#                             for opacity_softplus_beta in opacity_softplus_betas:
+#                                 output_path = f"{output_dir}_{algorithm}{formulation}_n{n_init_gaussians}_o{opacity_lr}_b{opacity_softplus_beta}_p{position_lr}_f{feature_lr}_s{scaling_lr}_r{rotation_lr}"
+#                                 grid_args_1 = f"--n_init_gaussians_for_synthetic {n_init_gaussians} --opacity_lr {opacity_lr}"
+#                                 grid_args_2 = f"--position_lr_init {position_lr} --position_lr_final {position_lr * 0.01} --feature_lr {feature_lr} --scaling_lr {scaling_lr} --rotation_lr {rotation_lr}"
+#                                 grid_args_render = f"--renderer={algorithm} --formulation {formulation} --opacity_softplus_beta {opacity_softplus_beta}"
+#                                 command = f"python3 train.py {common_args} {iteration_args} {grid_args_1} {grid_args_2} {grid_args_render} -m {output_path}"
+#                                 print(f"=========================================\n{command}")
+#                                 os.system(command)
+#                                 # os.system(f"{render_command} -m {output_path} {grid_args_render} --quiet --eval --skip_train")
+# position_lrs = [0.00032, ]
+
+# feature_lrs = [0.0025, 0.00125, ] # 0.0025
+# for scene in scenes:
+#     output_dir = f"./output/grid_search/{scene}"
+#     common_args = f" --densify_from_iter 1000000 --renderer={algorithm} --eval -s {basepath}/{scene}/"
+#     render_command = f"python3 render.py --background random --iteration 30000 -s {basepath}/{scene}/"
+#     for n_init_gaussians in n_init_gaussians_list:
+#         for opacity_lr in opacity_lrs:
+#             for position_lr in position_lrs:
+#                 for feature_lr in feature_lrs:
+#                     for scaling_lr in scaling_lrs:
+#                         for rotation_lr in rotation_lrs:
+#                             for opacity_softplus_beta in opacity_softplus_betas:
+#                                 output_path = f"{output_dir}_{algorithm}{formulation}_n{n_init_gaussians}_o{opacity_lr}_b{opacity_softplus_beta}_p{position_lr}_f{feature_lr}_s{scaling_lr}_r{rotation_lr}"
+#                                 grid_args_1 = f"--n_init_gaussians_for_synthetic {n_init_gaussians} --opacity_lr {opacity_lr}"
+#                                 grid_args_2 = f"--position_lr_init {position_lr} --position_lr_final {position_lr * 0.01} --feature_lr {feature_lr} --scaling_lr {scaling_lr} --rotation_lr {rotation_lr}"
+#                                 grid_args_render = f"--renderer={algorithm} --formulation {formulation} --opacity_softplus_beta {opacity_softplus_beta}"
+#                                 command = f"python3 train.py {common_args} {iteration_args} {grid_args_1} {grid_args_2} {grid_args_render} -m {output_path}"
+#                                 print(f"=========================================\n{command}")
+#                                 os.system(command)
+#                                 # os.system(f"{render_command} -m {output_path} {grid_args_render} --quiet --eval --skip_train")
+# feature_lrs = [0.0025, ]
+
+# scaling_lrs = [0.005, 0.0025, ] # 0.005
+# for scene in scenes:
+#     output_dir = f"./output/grid_search/{scene}"
+#     common_args = f" --densify_from_iter 1000000 --renderer={algorithm} --eval -s {basepath}/{scene}/"
+#     render_command = f"python3 render.py --background random --iteration 30000 -s {basepath}/{scene}/"
+#     for n_init_gaussians in n_init_gaussians_list:
+#         for opacity_lr in opacity_lrs:
+#             for position_lr in position_lrs:
+#                 for feature_lr in feature_lrs:
+#                     for scaling_lr in scaling_lrs:
+#                         for rotation_lr in rotation_lrs:
+#                             for opacity_softplus_beta in opacity_softplus_betas:
+#                                 output_path = f"{output_dir}_{algorithm}{formulation}_n{n_init_gaussians}_o{opacity_lr}_b{opacity_softplus_beta}_p{position_lr}_f{feature_lr}_s{scaling_lr}_r{rotation_lr}"
+#                                 grid_args_1 = f"--n_init_gaussians_for_synthetic {n_init_gaussians} --opacity_lr {opacity_lr}"
+#                                 grid_args_2 = f"--position_lr_init {position_lr} --position_lr_final {position_lr * 0.01} --feature_lr {feature_lr} --scaling_lr {scaling_lr} --rotation_lr {rotation_lr}"
+#                                 grid_args_render = f"--renderer={algorithm} --formulation {formulation} --opacity_softplus_beta {opacity_softplus_beta}"
+#                                 command = f"python3 train.py {common_args} {iteration_args} {grid_args_1} {grid_args_2} {grid_args_render} -m {output_path}"
+#                                 print(f"=========================================\n{command}")
+#                                 os.system(command)
+#                                 # os.system(f"{render_command} -m {output_path} {grid_args_render} --quiet --eval --skip_train")
+# scaling_lrs = [0.005, ]
+
+
+# rotation_lrs = [0.001, 0.0005, 0.00025, 0.000125] # 0.000125
+rotation_lrs = [0.01, 0.1, 1.0] # 0.000125
 for scene in scenes:
     output_dir = f"./output/grid_search/{scene}"
     common_args = f" --densify_from_iter 1000000 --renderer={algorithm} --eval -s {basepath}/{scene}/"
@@ -96,3 +211,4 @@ for scene in scenes:
                                 print(f"=========================================\n{command}")
                                 os.system(command)
                                 # os.system(f"{render_command} -m {output_path} {grid_args_render} --quiet --eval --skip_train")
+rotation_lrs = [0.000125, ]

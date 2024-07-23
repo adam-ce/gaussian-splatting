@@ -24,7 +24,8 @@ nerf_synthetic_scenes = []
 n_gaussians_list = [4000, 12000, 36000, 108000, ]
 # algorithms = [("sorted_splatter", 0.01, 0), ("sorted_splatter", 0.01, 0), ("inria_splatter", 0.01, 0), ("vol_marcher", 0.001, 3)]
 algorithms = [("vol_marcher", 0.001, 3), ]
-# algorithms = [("inria_splatter", 0.01, 0), ]
+# algorithms = [("self_shadow_splatter", 0.001, 3), ]
+# algorithms = [("inria_splatter", 0.005, 0), ]
 
 # mipnerf360_outdoor_scenes = ["bicycle", "flowers", "garden", "stump", "treehill"]
 # mipnerf360_indoor_scenes = ["room", "counter", "kitchen", "bonsai"]
@@ -32,10 +33,8 @@ algorithms = [("vol_marcher", 0.001, 3), ]
 # deep_blending_scenes = ["drjohnson", "playroom"]
 # vienna_scenes = ["colourlab3", "hohe_veitsch"]
 #vienna_scenes = ["insti_roof22"]
-# nerf_synthetic_scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
 nerf_synthetic_scenes = ["ficus", "hotdog", ] # gataki
-# nerf_synthetic_scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "materials", "mic"] # gs1-10
-# nerf_synthetic_scenes = ["materials", "mic"] # king
+# nerf_synthetic_scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
 
 
 parser = ArgumentParser(description="Full evaluation script parameters")
