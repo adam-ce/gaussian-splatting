@@ -66,7 +66,7 @@ class ModelParams(ParamGroup):
     
     def default_opacity_lr(self):
         if self.formulation == 0:
-            return 0.05
+            return 0.005
         if self.formulation == 1:
             return 0.005
         if self.formulation == 2:
