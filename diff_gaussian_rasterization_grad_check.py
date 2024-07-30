@@ -33,8 +33,15 @@ args = parser.parse_args(sys.argv[1:])
 
 # MAKE THE GAUSSIANS
 r = 0.6
-a = 0.9
+a = 0.7
 s = 0.4
+
+xyz = torch.tensor([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.5, 0.5], [0.5, 0.0, 1.0], [0.4, 0.3, 0.2], [1.2, 0.8, 0.2], [0.8, 0.3, 0.7], [0.3, 0.2, 0.6]]).double().cuda()
+rgb = torch.tensor([[0.02, 0.02, 0.02], [r, 0.02, 0.02], [0.02, r, 0.02], [0.02, 0.02, r], [0.12, 0.82, 0.22], [r, 0.6, 0.2], [0.1, r, 0.8], [0.4, 0.9, r]]).double().cuda().unsqueeze(1)
+scales = torch.tensor([[s*0.8, s*1.1, s*1.2], [s*0.9, s*1.2, s*0.7], [s*0.9, s*1.2, s*1.3], [s*1.2, s*1.8, s*1.7], [s*0.7, s*0.8, s*1.5], [s*0.9, s*1.2, s*0.7], [s*0.9, s*1.2, s*1.3], [s*0.8, s*1.5, s*0.7]]).double().cuda()
+rots = torch.tensor([[1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0]]).double().cuda()
+opacity = torch.tensor([[a], [a], [a], [a], [a], [a], [a], [a]]).double().cuda()
+
 # xyz = torch.tensor([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.5, 0.5], [0.5, 0.0, 1.0]]).double().cuda()
 # rgb = torch.tensor([[0.02, 0.02, 0.02], [r, 0.02, 0.02], [0.02, r, 0.02], [0.02, 0.02, r]]).double().cuda().unsqueeze(1)
 # scales = torch.tensor([[s*0.8, s*1.1, s*1.2], [s*0.9, s*1.2, s*0.7], [s*0.9, s*1.2, s*1.3], [s*1.4, s*0.8, s*0.7]]).double().cuda()
@@ -42,11 +49,11 @@ s = 0.4
 # opacity = torch.tensor([[a], [a], [a], [a]]).double().cuda()
 
 
-xyz = torch.tensor([[0.0, 0.0, 0.0], [1.0, 0.1, 0.2], ]).double().cuda()
-rgb = torch.tensor([[0.02, 0.02, 0.02], [r, 0.02, 0.02], ]).double().cuda().unsqueeze(1)
-scales = torch.tensor([[s*0.8, s*1.1, s*1.2], [s*0.9, s*1.2, s*0.7], ]).double().cuda()
-rots = torch.tensor([[1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], ]).double().cuda()
-opacity = torch.tensor([[a], [a]]).double().cuda()
+# xyz = torch.tensor([[0.0, 0.0, 0.0], [1.0, 0.1, 0.2], ]).double().cuda()
+# rgb = torch.tensor([[0.02, 0.02, 0.02], [r, 0.02, 0.02], ]).double().cuda().unsqueeze(1)
+# scales = torch.tensor([[s*0.8, s*1.1, s*1.2], [s*0.9, s*1.2, s*0.7], ]).double().cuda()
+# rots = torch.tensor([[1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], ]).double().cuda()
+# opacity = torch.tensor([[a], [a]]).double().cuda()
 
 
 # xyz = torch.tensor([[0.0, 0.0, 0.0], ]).double().cuda()
@@ -62,12 +69,12 @@ features_dc = RGB2SH(rgb).double()
 features_rest = torch.zeros((features_dc.shape[0], 0, 3)).double().cuda()
 
 
-xyz.requires_grad = False
-features_dc.requires_grad = False
-features_rest.requires_grad = False
+xyz.requires_grad = True
+features_dc.requires_grad = True
+features_rest.requires_grad = True
 scales.requires_grad = True
 rots.requires_grad = True
-opacity.requires_grad = False
+opacity.requires_grad = True
 
 
 # MAKE THE CAMERA
@@ -106,5 +113,5 @@ image = render_wrapper(xyz, features_dc, features_rest, scales, rots, opacity)
 torchvision.utils.save_image(image, "./output/diff_gaussian_rasterization_grad_check_render.png")
 
 # defaults: eps=1e-06, atol=1e-05, rtol=0.001
-gradcheck(render_wrapper, (xyz, features_dc, features_rest, scales, rots, opacity), eps=1e-6, rtol=0.001, check_undefined_grad=False)
+gradcheck(render_wrapper, (xyz, features_dc, features_rest, scales, rots, opacity), check_undefined_grad=False)
 print("done.. :D")
