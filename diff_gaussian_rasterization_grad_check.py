@@ -34,7 +34,7 @@ args = parser.parse_args(sys.argv[1:])
 # MAKE THE GAUSSIANS
 r = 0.6
 a = 0.7
-s = 0.4
+s = 0.1
 
 xyz = torch.tensor([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.5, 0.5], [0.5, 0.0, 1.0], [0.4, 0.3, 0.2], [1.2, 0.8, 0.2], [0.8, 0.3, 0.7], [0.3, 0.2, 0.6]]).double().cuda()
 rgb = torch.tensor([[0.02, 0.02, 0.02], [r, 0.02, 0.02], [0.02, r, 0.02], [0.02, 0.02, r], [0.12, 0.82, 0.22], [r, 0.6, 0.2], [0.1, r, 0.8], [0.4, 0.9, r]]).double().cuda().unsqueeze(1)
@@ -89,7 +89,7 @@ projection_matrix = getProjectionMatrix(znear=znear, zfar=zfar, fovX=FOV,
                                         fovY=FOV).transpose(0, 1).cuda()
 full_proj_transform = (world_view_transform.unsqueeze(0).bmm(projection_matrix.unsqueeze(0))).squeeze(0)
 
-viewpoint_cam = MiniCam(5, 5, FOV, FOV, znear, zfar, world_view_transform, full_proj_transform)
+viewpoint_cam = MiniCam(8, 8, FOV, FOV, znear, zfar, world_view_transform, full_proj_transform)
 viewpoint_cam.world_view_transform = viewpoint_cam.world_view_transform.to(torch.float64)
 viewpoint_cam.full_proj_transform = viewpoint_cam.full_proj_transform.to(torch.float64)
 viewpoint_cam.camera_center = viewpoint_cam.camera_center.to(torch.float64)
