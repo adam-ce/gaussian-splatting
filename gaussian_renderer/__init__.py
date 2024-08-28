@@ -40,7 +40,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     scales = None
     rotations = None
     cov3D_precomp = None
-    if pipe.compute_cov3D_python and pipe.renderer != "vol_marcher":
+    if pipe.compute_cov3D_python and "marcher" not in pipe.renderer:
         cov3D_precomp = pc.get_covariance(scaling_modifier)
     else:
         scales = pc.get_scaling
@@ -50,8 +50,8 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     # from SHs in Python, do it. If not, then SH -> RGB conversion will be done by rasterizer.
     shs = None
     colors_precomp = None
-    if override_color is None or pipe.renderer == "vol_marcher":
-        if pipe.convert_SHs_python and pipe.renderer != "vol_marcher":
+    if override_color is None or "marcher" in pipe.renderer:
+        if pipe.convert_SHs_python and "marcher" not in pipe.renderer:
             shs_view = pc.get_features.transpose(1, 2).view(-1, 3, (pc.max_sh_degree+1)**2)
             dir_pp = (pc.get_xyz - viewpoint_camera.camera_center.repeat(pc.get_features.shape[0], 1))
             dir_pp_normalized = dir_pp/dir_pp.norm(dim=1, keepdim=True)
@@ -63,7 +63,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         colors_precomp = override_color
  
 
-    if pipe.renderer == "vol_marcher":
+    if "marcher" in pipe.renderer:
         out_data = vol_marcher.apply(shs.contiguous(),
                                      opacity.contiguous(),
                                      means3D.contiguous(),

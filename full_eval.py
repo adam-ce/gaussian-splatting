@@ -24,7 +24,7 @@ n_gaussians_list = [4000, 12000, 36000, 108000, 324000, 972000]
 # n_gaussians_list = [4000, 324000]
 # algorithms = [("sorted_splatter", 0.01, 0), ("sorted_splatter", 0.01, 0), ("inria_splatter", 0.01, 0), ("vol_marcher", 0.001, 3)]
 # algorithms = [("vol_marcher", 0.001, 3), ]
-algorithms = [("vol_marcher", 0.005, 0), ]
+algorithms = [("opasp_marcher", 0.0025, 3), ]
 # algorithms = [("self_ewa_splatter", 0.001, 3), ]
 # algorithms = [("inria_splatter", 0.005, 0), ]
 
