@@ -21,22 +21,22 @@ vienna_scenes = []
 nerf_synthetic_scenes = []
 
 n_gaussians_list = [4000, 12000, 36000, 108000, 324000, 972000]
-# n_gaussians_list = [4000, 324000]
 # algorithms = [("sorted_splatter", 0.01, 0), ("sorted_splatter", 0.01, 0), ("inria_splatter", 0.01, 0), ("vol_marcher", 0.001, 3)]
 # algorithms = [("vol_marcher", 0.001, 3), ]
-algorithms = [("opasp_marcher", 0.0025, 3), ]
-# algorithms = [("self_ewa_splatter", 0.001, 3), ]
-# algorithms = [("inria_splatter", 0.005, 0), ]
+# algorithms = [("opasp_marcher", 0.0025, 3), ]
+# algorithms = [("test_satn_splatter", 0.001, 3), ]
+algorithms = [("3dgs_splatter", 0.01, 0), ]
 
+# mipnerf360_outdoor_scenes = ["garden", ]
 # mipnerf360_outdoor_scenes = ["bicycle", "flowers", "garden", "stump", "treehill"]
 # mipnerf360_indoor_scenes = ["room", "counter", "kitchen", "bonsai"]
 # tanks_and_temples_scenes = ["truck", "train"]
 # deep_blending_scenes = ["drjohnson", "playroom"]
 # vienna_scenes = ["colourlab3", "hohe_veitsch"]
 #vienna_scenes = ["insti_roof22"]
-nerf_synthetic_scenes = ["ship", ] # gataki
-# nerf_synthetic_scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3", 
-                        #  "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
+# nerf_synthetic_scenes = ["ship", ] # gataki
+nerf_synthetic_scenes = ["burning_ficus", "coloured_wdas", "explosion_1", "explosion_2", "explosion_3",
+                         "wdas_cloud_1", "wdas_cloud_2", "wdas_cloud_3", "chair", "drums", "ficus", "hotdog", "lego", "materials", "mic", "ship", ]
 
 
 parser = ArgumentParser(description="Full evaluation script parameters")
@@ -76,7 +76,7 @@ if not args.skip_training or not args.skip_rendering:
 
 if not args.skip_training:
     learning_rates = "--position_lr_init 0.00032 --feature_lr 0.0025 --scaling_lr 0.005 --rotation_lr 0.1"
-    common_args = f" --quiet --eval --test_iterations -1  --save_iterations 5000 10000 15000 20000 30000 --iterations 30000 --densify_from_iter 10000000 {learning_rates}"
+    common_args = f" --quiet --eval --test_iterations -1  --save_iterations 5000 10000 15000 20000 30000 --iterations 30000 --densify_until_iter 0 {learning_rates}"
     for n_gaussians in n_gaussians_list:
         for algorithm, opacity_learning_rate, formulation in algorithms:
                 config_args = f" --renderer={algorithm} --opacity_lr {opacity_learning_rate} --formulation={formulation} --n_init_gaussians_for_synthetic {n_gaussians}"
@@ -121,9 +121,10 @@ if not args.skip_rendering:
                     config_args = f" --renderer={algorithm} --formulation {formulation}"
                     for iter in [5000, 10000, 15000, 20000, 30000]:
                         if scene not in white_bg_scenes:
-                            os.system(f"python3 render.py --iteration {iter} -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
+                            command = f"python3 render.py --iteration {iter} -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}"
                         else:
-                            os.system(f"python3 render.py --background white --iteration {iter} -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}")
+                            command = f"python3 render.py --background white --iteration {iter} -s {source} -m {args.output_path}/{algorithm}_{n_gaussians}_{scene} {config_args} {common_args}"
+                        os.system(command)
 
 if not args.skip_metrics:
     scenes_string = ""

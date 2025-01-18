@@ -143,17 +143,28 @@ class GaussianModel:
         if self.active_sh_degree < self.max_sh_degree:
             self.active_sh_degree += 1
 
-    def create_from_pcd(self, pcd : BasicPointCloud, spatial_lr_scale : float):
+    def create_from_pcd(self, pcd : BasicPointCloud, spatial_lr_scale : float, n_max_init_gaussians: int):
+        if pcd.points.shape[0] >= n_max_init_gaussians and pcd.points.shape[0] == pcd.colors.shape[0]:
+            # Generate random indices for subsampling
+            indices = np.random.choice(pcd.points.shape[0], size=n_max_init_gaussians, replace=False)
+            
+            # Subsample points and colors using the same indices
+            points_ss = pcd.points[indices]
+            colors_ss = pcd.colors[indices]
+        else:
+            points_ss = pcd.points
+            colors_ss = pcd.colors
+
         self.spatial_lr_scale = spatial_lr_scale
-        fused_point_cloud = torch.tensor(np.asarray(pcd.points)).float().cuda()
-        fused_color = RGB2SH(torch.tensor(np.asarray(pcd.colors)).float().cuda())
+        fused_point_cloud = torch.tensor(np.asarray(points_ss)).float().cuda()
+        fused_color = RGB2SH(torch.tensor(np.asarray(colors_ss)).float().cuda())
         features = torch.zeros((fused_color.shape[0], 3, (self.max_sh_degree + 1) ** 2)).float().cuda()
         features[:, :3, 0 ] = fused_color
         features[:, 3:, 1:] = 0.0
 
         print("Number of points at initialisation : ", fused_point_cloud.shape[0])
 
-        dist2 = torch.clamp_min(distCUDA2(torch.from_numpy(np.asarray(pcd.points)).float().cuda()), 0.0000001)
+        dist2 = torch.clamp_min(distCUDA2(torch.from_numpy(np.asarray(points_ss)).float().cuda()), 0.0000001)
         scales = torch.sqrt(dist2)[...,None].repeat(1, 3)
         rots = torch.zeros((fused_point_cloud.shape[0], 4), device="cuda")
         rots[:, 0] = 1
@@ -255,9 +266,9 @@ class GaussianModel:
         el = PlyElement.describe(elements, 'vertex')
         PlyData([el]).write(path)
 
-    def reset_opacity(self):
-        if self.formulation == 0:  # 0=original/opacity; 1=mass; 2=density; 3=ots
-            opacities_max = torch.ones_like(self.get_opacity)*0.01
+    def reset_opacity(self, value: float):
+        if self.formulation == 0 or self.formulation == 3:  # 0=original/opacity; 1=mass; 2=density; 3=ots
+            opacities_max = torch.ones_like(self.get_opacity)*value
         elif self.formulation == 1:
             opacities_max = (0.005 * torch.ones_like(self.get_opacity))
             dets_covs = torch.prod(self.get_scaling, -1, keepdim=True)
@@ -267,8 +278,6 @@ class GaussianModel:
             exp3d_integral = ((2 * math.pi)**(3/2)) * torch.abs(torch.prod(self.get_scaling, -1, keepdim=True)) # scales are SDs in eigen vector directions
             exp2d_integral = 2 * math.pi * torch.abs(torch.prod(self.get_scaling[:, :2], -1, keepdim=True))
             opacities_max = opacities_max * exp2d_integral / exp3d_integral
-        elif self.formulation == 3:
-            opacities_max = torch.ones_like(self.get_opacity)*0.01
 
         opacities_new = torch.min(self.get_opacity, opacities_max)
         opacities_new = self.opacity_inverse_activation(opacities_new)
@@ -469,13 +478,13 @@ class GaussianModel:
             pass
         elif self.formulation == 2:
             pass
-            # dets_covs = torch.prod(self.get_scaling, -1, keepdim=True)
-            # prune_mask = ((self.get_opacity * (torch.sqrt(dets_covs) * (2 * math.pi) ** 3/2)) < min_opacity).squeeze()
-            # if max_screen_size:
-            #     big_points_vs = self.max_radii2D > max_screen_size
-            #     big_points_ws = self.get_scaling.max(dim=1).values > 0.1 * extent
-            #     prune_mask = torch.logical_or(torch.logical_or(prune_mask, big_points_vs), big_points_ws)
-            # self.prune_points(prune_mask)
+            dets_covs = torch.prod(self.get_scaling, -1, keepdim=True)
+            prune_mask = ((self.get_opacity * (torch.sqrt(dets_covs) * (2 * math.pi) ** 3/2)) < min_opacity).squeeze()
+            if max_screen_size:
+                big_points_vs = self.max_radii2D > max_screen_size
+                big_points_ws = self.get_scaling.max(dim=1).values > 0.1 * extent
+                prune_mask = torch.logical_or(torch.logical_or(prune_mask, big_points_vs), big_points_ws)
+            self.prune_points(prune_mask)
 
         torch.cuda.empty_cache()
 

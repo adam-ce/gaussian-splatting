@@ -50,6 +50,7 @@ class ModelParams(ParamGroup):
         self.formulation = 0 # 0=original/opacity/density with (1-x approx); 1=mass; 2=density; 3=ots with exp activation
         self.opacity_softplus_beta = 2.0 # for formulation 3
         self.n_init_gaussians_for_synthetic = 100_000
+        self.n_max_init_gaussians = 1_000_000_000
         self._source_path = ""
         self._model_path = ""
         self._images = "images"
@@ -118,9 +119,12 @@ class OptimizationParams(ParamGroup):
         self.lambda_dssim = 0.2
         self.densification_interval = 100
         self.opacity_reset_interval = 3000
-        self.densify_from_iter = 500000
+        self.opacity_reset_value = 0.01
+        self.densify_from_iter = 500
         self.densify_until_iter = 15_000
+        self.max_n_gaussians = 10_000_000_000
         self.densify_grad_threshold = model_params.default_densify_grad_threshold()
+        self.prune_max_opacity = 0.005
         super().__init__(parser, "Optimization Parameters")
 
 def get_combined_args(parser : ArgumentParser):

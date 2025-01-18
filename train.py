@@ -22,6 +22,7 @@ from utils.general_utils import safe_state
 import uuid
 from tqdm import tqdm
 from utils.image_utils import psnr
+from lpipsPyTorch import lpips
 from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams
 try:
@@ -31,7 +32,7 @@ except ImportError:
     TENSORBOARD_FOUND = False
 
 
-def training(model_params, opt, pipe, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
+def training(model_params, opt: OptimizationParams, pipe, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
     first_iter = 0
     tb_writer = prepare_output_and_logger(model_params)
     gaussians = GaussianModel(model_params)
@@ -116,20 +117,20 @@ def training(model_params, opt, pipe, testing_iterations, saving_iterations, che
                 scene.save(iteration)
 
             # Densification
-            if False and iteration < opt.densify_until_iter:
-                # # Keep track of max radii in image-space for pruning
-                # gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
-                # viewspace_point_tensor_grad = screenspace_point_tensor.grad * torch.tensor((image.shape[2]/2, image.shape[1]/2, 1)).view(1, -1).to(screenspace_point_tensor.device)
+            if iteration < opt.densify_until_iter and gaussians._opacity.shape[0] < opt.max_n_gaussians:
+                # Keep track of max radii in image-space for pruning
+                gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
+                viewspace_point_tensor_grad = screenspace_point_tensor.grad * torch.tensor((image.shape[2]/2, image.shape[1]/2, 1)).view(1, -1).to(screenspace_point_tensor.device)
 
-                # # print(f"screenspace_point_tensor: {torch.max(viewspace_point_tensor_grad, dim=0)[0]}")
-                # gaussians.add_densification_stats(viewspace_point_tensor_grad, visibility_filter)
+                # print(f"screenspace_point_tensor: {torch.max(viewspace_point_tensor_grad, dim=0)[0]}")
+                gaussians.add_densification_stats(viewspace_point_tensor_grad, visibility_filter)
 
-                # if iteration > opt.densify_from_iter and iteration % opt.densification_interval == 0:
-                #     size_threshold = 20 if iteration > opt.opacity_reset_interval else None
-                #     gaussians.densify_and_prune(opt.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold) # prune based on density in the centre
+                if iteration > opt.densify_from_iter and iteration % opt.densification_interval == 0:
+                    size_threshold = 20 if iteration > opt.opacity_reset_interval else None
+                    gaussians.densify_and_prune(opt.densify_grad_threshold, opt.prune_max_opacity, scene.cameras_extent, size_threshold) # prune based on density in the centre
                 
-                if iteration % opt.opacity_reset_interval == 0 or (model_params.white_background and iteration == opt.densify_from_iter):
-                    gaussians.reset_opacity()
+                if iteration % opt.opacity_reset_interval == 0:
+                    gaussians.reset_opacity(opt.opacity_reset_value)
 
             # Optimizer step
             if iteration < opt.iterations:
@@ -187,6 +188,7 @@ def training_report(tb_writer, iteration, Ll1, loss, l1_loss, elapsed, testing_i
                 l1_test = 0.0
                 psnr_test = 0.0
                 ssim_test = 0.0
+                lpips_test = 0.0
                 for idx, viewpoint in enumerate(config['cameras']):
                     image = torch.clamp(renderFunc(viewpoint, scene.gaussians, pipe, background)["render"], 0.0, 1.0)
                     gt_image = torch.clamp(viewpoint.ground_truth(background).to("cuda"), 0.0, 1.0)
@@ -197,13 +199,17 @@ def training_report(tb_writer, iteration, Ll1, loss, l1_loss, elapsed, testing_i
                     l1_test += l1_loss(image, gt_image).mean().double()
                     psnr_test += psnr(image, gt_image).mean().double()
                     ssim_test += ssim(image, gt_image).mean().double()
+                    lpips_test += lpips(image, gt_image).mean().double()
                 psnr_test /= len(config['cameras'])
                 l1_test /= len(config['cameras'])
                 ssim_test /= len(config['cameras'])
-                print("\n[ITER {}] Evaluating {}: L1 {}, PSNR {}, SSIM {}".format(iteration, config['name'], l1_test, psnr_test, ssim_test))
+                lpips_test /= len(config['cameras'])
+                print(f"\n[ITER {iteration}] Evaluating {config['name']}: L1 {l1_test}, PSNR {psnr_test}, SSIM {ssim_test}, LPIPS {lpips_test}")
                 if tb_writer:
                     tb_writer.add_scalar(config['name'] + '/loss_viewpoint - l1_loss', l1_test, iteration)
                     tb_writer.add_scalar(config['name'] + '/loss_viewpoint - psnr', psnr_test, iteration)
+                    tb_writer.add_scalar(config['name'] + '/loss_viewpoint - ssim', ssim_test, iteration)
+                    tb_writer.add_scalar(config['name'] + '/loss_viewpoint - lpips', lpips_test, iteration)
 
         torch.cuda.empty_cache()
 

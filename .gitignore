@@ -26,3 +26,5 @@ grid_search_wdas_cloud_3/*
 /grid_search_mic/*
 /grid_search_ship/*
 /output_marcher/*
+/grid/*
+/eval_test/*
