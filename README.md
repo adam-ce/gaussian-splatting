@@ -3,9 +3,14 @@ Adam Celarek, Georgios Kopanas, George Drettakis, Michael Wimmer, Bernhard Kerbl
 
 This repository contains the official authors implementation associated with the paper "Does 3D Gaussian Splatting Need Accurate Volumetric Rendering?" (which can not be found at the time of writing).
 
+<a href="https://www.cg.tuwien.ac.at/">
+  <div style="display: inline-block; background-color: white; padding: 5px; border-radius: 5px;">
+    <img height="100" src="https://www.cg.tuwien.ac.at/TU-Wien.svg">
+    <img height="100" src="https://www.cg.tuwien.ac.at/Klex.svg">
+  </div>
+</a>
 <a href="https://www.inria.fr/"><img height="100" src="assets/logo_inria.png"> </a>
 <a href="https://univ-cotedazur.eu/"><img height="100" src="assets/logo_uca.png"> </a>
-<a href="https://www.cg.tuwien.ac.at/"><img height="100" src="https://www.cg.tuwien.ac.at/TU-Wien.svg"><img height="100" src="https://www.cg.tuwien.ac.at/Klex.svg"> </a> 
 <a href="https://team.inria.fr/graphdeco/"> <img style="width:100%;" src="assets/logo_graphdeco.png"></a>
 
 Abstract: *Since its introduction, 3D Gaussian Splatting (3DGS) has become an important reference method for learning 3D representations of a captured scene, allowing real-time novel-view synthesis with high visual quality and fast training times.  Neural Radiance Fields (NeRFs), which preceded 3DGS, are based on a principled ray-marching approach for volumetric rendering. In contrast, while sharing a similar image formation model with NeRF, 3DGS uses a hybrid rendering solution that builds on the strengths of volume rendering and primitive rasterization. A crucial benefit of 3DGS is its performance, achieved through a set of approximations, in many cases with respect to volumetric rendering theory. A naturally arising question is whether replacing these approximations with more principled volumetric rendering solutions can improve the quality of 3DGS.
