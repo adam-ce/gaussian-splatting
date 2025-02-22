@@ -1,30 +1,22 @@
-# 3D Gaussian Splatting for Real-Time Radiance Field Rendering
-Bernhard Kerbl*, Georgios Kopanas*, Thomas Leimkühler, George Drettakis (* indicates equal contribution)<br>
-| [Webpage](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/) | [Full Paper](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/3d_gaussian_splatting_high.pdf) | [Video](https://youtu.be/T_kXY43VZnk) | [Other GRAPHDECO Publications](http://www-sop.inria.fr/reves/publis/gdindex.php) | [FUNGRAPH project page](https://fungraph.inria.fr) |<br>
-| [T&T+DB COLMAP (650MB)](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/datasets/input/tandt_db.zip) | [Pre-trained Models (14 GB)](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/datasets/pretrained/models.zip) | [Viewers for Windows (60MB)](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/binaries/viewers.zip) | [Evaluation Images (7 GB)](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/evaluation/images.zip) |<br>
-![Teaser image](assets/teaser.png)
+# Does 3D Gaussian Splatting Need Accurate Volumetric Rendering?
+Adam Celarek, Georgios Kopanas, George Drettakis, Michael Wimmer, Bernhard Kerbl<br>
 
-This repository contains the official authors implementation associated with the paper "3D Gaussian Splatting for Real-Time Radiance Field Rendering", which can be found [here](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/). We further provide the reference images used to create the error metrics reported in the paper, as well as recently created, pre-trained models. 
+This repository contains the official authors implementation associated with the paper "Does 3D Gaussian Splatting Need Accurate Volumetric Rendering?" (which can not be found at the time of writing).
 
 <a href="https://www.inria.fr/"><img height="100" src="assets/logo_inria.png"> </a>
 <a href="https://univ-cotedazur.eu/"><img height="100" src="assets/logo_uca.png"> </a>
-<a href="https://www.mpi-inf.mpg.de"><img height="100" src="assets/logo_mpi.png"> </a> 
+<a href="https://www.cg.tuwien.ac.at/"><img height="100" src="https://www.cg.tuwien.ac.at/TU-Wien.svg"><img height="100" src="https://www.cg.tuwien.ac.at/Klex.svg"> </a> 
 <a href="https://team.inria.fr/graphdeco/"> <img style="width:100%;" src="assets/logo_graphdeco.png"></a>
 
-Abstract: *Radiance Field methods have recently revolutionized novel-view synthesis of scenes captured with multiple photos or videos. However, achieving high visual quality still requires neural networks that are costly to train and render, while recent faster methods inevitably trade off speed for quality. For unbounded and complete scenes (rather than isolated objects) and 1080p resolution rendering, no current method can achieve real-time display rates. We introduce three key elements that allow us to achieve state-of-the-art visual quality while maintaining competitive training times and importantly allow high-quality real-time (≥ 30 fps) novel-view synthesis at 1080p resolution. First, starting from sparse points produced during camera calibration, we represent the scene with 3D Gaussians that preserve desirable properties of continuous volumetric radiance fields for scene optimization while avoiding unnecessary computation in empty space; Second, we perform interleaved optimization/density control of the 3D Gaussians, notably optimizing anisotropic covariance to achieve an accurate representation of the scene; Third, we develop a fast visibility-aware rendering algorithm that supports anisotropic splatting and both accelerates training and allows realtime rendering. We demonstrate state-of-the-art visual quality and real-time rendering on several established datasets.*
+Abstract: *Since its introduction, 3D Gaussian Splatting (3DGS) has become an important reference method for learning 3D representations of a captured scene, allowing real-time novel-view synthesis with high visual quality and fast training times.  Neural Radiance Fields (NeRFs), which preceded 3DGS, are based on a principled ray-marching approach for volumetric rendering. In contrast, while sharing a similar image formation model with NeRF, 3DGS uses a hybrid rendering solution that builds on the strengths of volume rendering and primitive rasterization. A crucial benefit of 3DGS is its performance, achieved through a set of approximations, in many cases with respect to volumetric rendering theory. A naturally arising question is whether replacing these approximations with more principled volumetric rendering solutions can improve the quality of 3DGS.
+In this paper, we present an in-depth analysis of the various approximations and assumptions used by the original 3DGS solution. We demonstrate that, while more accurate volumetric rendering can help for low numbers of primitives, the power of efficient optimization and the large number of Gaussians allows 3DGS to outperform volumetric rendering despite its approximations.*
 
 <section class="section" id="BibTeX">
   <div class="container is-max-desktop content">
     <h2 class="title">BibTeX</h2>
-    <pre><code>@Article{kerbl3Dgaussians,
-      author       = {Kerbl, Bernhard and Kopanas, Georgios and Leimk{\"u}hler, Thomas and Drettakis, George},
-      title        = {3D Gaussian Splatting for Real-Time Radiance Field Rendering},
-      journal      = {ACM Transactions on Graphics},
-      number       = {4},
-      volume       = {42},
-      month        = {July},
-      year         = {2023},
-      url          = {https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/}
+    <pre><code>@Article{celarek2025,
+      author       = {Celarek, Adamand Kopanas, Georgios and Drettakis, George and Wimmer, Michael and Kerbl, Bernhard },
+      title        = {Does 3D Gaussian Splatting Need Accurate Volumetric Rendering?},
 }</code></pre>
   </div>
 </section>
@@ -32,7 +24,7 @@ Abstract: *Radiance Field methods have recently revolutionized novel-view synthe
 
 ## Funding and Acknowledgments
 
-This research was funded by the ERC Advanced grant FUNGRAPH No 788065. The authors are grateful to Adobe for generous donations, the OPAL infrastructure from Université Côte d’Azur and for the HPC resources from GENCI–IDRIS (Grant 2022-AD011013409). The authors thank the anonymous reviewers for their valuable feedback, P. Hedman and A. Tewari for proofreading earlier drafts also T. Müller, A. Yu and S. Fridovich-Keil for helping with the comparisons.
+G. Drettakis was supported by the ERC Advanced Grant [FUNGRAPH (788065)](https://project.inria.fr/fungraph), and acknowledges support from NVIDIA and Adobe.
 
 ## Step-by-step Tutorial
 
@@ -46,13 +38,8 @@ User [camenduru](https://github.com/camenduru) was kind enough to provide a Cola
 
 The repository contains submodules, thus please check it out with 
 ```shell
-# SSH
-git clone git@github.com:graphdeco-inria/gaussian-splatting.git --recursive
-```
-or
-```shell
 # HTTPS
-git clone https://github.com/graphdeco-inria/gaussian-splatting --recursive
+git clone https://github.com/cg-tuwien/does_3d_gaussian_splatting_need_accurate_volumetric_rendering.git --recursive
 ```
 
 ## Overview
