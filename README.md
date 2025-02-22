@@ -3,12 +3,12 @@ Adam Celarek, Georgios Kopanas, George Drettakis, Michael Wimmer, Bernhard Kerbl
 
 This repository contains the official authors implementation associated with the paper "Does 3D Gaussian Splatting Need Accurate Volumetric Rendering?" (which can not be found at the time of writing).
 
-<a href="https://www.cg.tuwien.ac.at/">
   <div style="display: inline-block; background-color: white; padding: 5px; border-radius: 5px;">
+<a href="https://www.cg.tuwien.ac.at/">
     <img height="100" src="https://www.cg.tuwien.ac.at/TU-Wien.svg">
     <img height="100" src="https://www.cg.tuwien.ac.at/Klex.svg">
-  </div>
 </a>
+  </div>
 <a href="https://www.inria.fr/"><img height="100" src="assets/logo_inria.png"> </a>
 <a href="https://univ-cotedazur.eu/"><img height="100" src="assets/logo_uca.png"> </a>
 <a href="https://team.inria.fr/graphdeco/"> <img style="width:100%;" src="assets/logo_graphdeco.png"></a>
